@@ -21,6 +21,7 @@ This work is based on a research paper ["A model of collective behavior based pu
 
 - [Second report](https://github.com/siggsy/collective-vision/milestone/2)
   - Evolve the previous report based on provided commentary.
+  - Experiment with model implementation
 
 - [Third report](https://github.com/siggsy/collective-vision/milestone/3)
   - Finalize the report and prepare a presenation (~20min) containing the general overview of the project, achievments and challanges.
