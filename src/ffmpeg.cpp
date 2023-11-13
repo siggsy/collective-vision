@@ -29,51 +29,51 @@ using namespace std;
  * @return Exit status of child process
  */
 static int ffEncode_parent(int childPid, int writeFD, const Image& img){
-		// Counters for safe write
-		const uint8_t* data = img.raw();
-		const size_t size = img.rawSize();
-		size_t count = 0;
+	// Counters for safe write
+	const uint8_t* data = img.raw();
+	const size_t size = img.rawSize();
+	size_t count = 0;
+	
+	// FD monitors
+	fd_set fds;
+	FD_ZERO(&fds);
+	FD_SET(writeFD, &fds);
+	struct timeval timeout = {WRITE_TIMEOUT_S, WRITE_TIMEOUT_MS*1000};
+	
+	// Child status
+	int status = 1;
+	bool exited = false;
+	
+	while (count < size){
+		int fd_count = select(writeFD+1, NULL, &fds, NULL, &timeout);
 		
-		// FD monitors
-		fd_set fds;
-		FD_ZERO(&fds);
-		FD_SET(writeFD, &fds);
-		struct timeval timeout = {WRITE_TIMEOUT_S, WRITE_TIMEOUT_MS*1000};
-		
-		// Child status
-		int status = 1;
-		bool exited = false;
-		
-		while (count < size){
-			int fd_count = select(writeFD+1, NULL, &fds, NULL, &timeout);
-			
-			// error
-			if (fd_count < 0){
-				break;
-			}
-			
-			// Write buffer ready
-			else if (FD_ISSET(writeFD, &fds)){
-				ssize_t n = write(writeFD, data, size-count);
-				if (n > 0)
-					count += n;
-			}
-			
-			// Wait for write buffer, check child process
-			else if (waitpid(childPid, &status, WNOHANG) != 0){
-				exited = true;
-				break;
-			}
-			
+		// error
+		if (fd_count < 0){
+			break;
 		}
 		
-		close(writeFD);
-		
-		if (!exited){
-			waitpid(childPid, &status, 0);
+		// Write buffer ready
+		else if (FD_ISSET(writeFD, &fds)){
+			ssize_t n = write(writeFD, data, size-count);
+			if (n > 0)
+				count += n;
 		}
 		
-		return status;
+		// Wait for write buffer, check child process
+		else if (waitpid(childPid, &status, WNOHANG) != 0){
+			exited = true;
+			break;
+		}
+		
+	}
+	
+	close(writeFD);
+	
+	if (!exited){
+		waitpid(childPid, &status, 0);
+	}
+	
+	return status;
 }
 
 

@@ -21,7 +21,7 @@ int main(int argc, char const* const* argv){
 	
 	int err = ffEncode(img, "bin/img.png", true);
 	if (err != 0){
-		cerr << ANSI_RED << "Failed to encode image using ffmpeg." << ANSI_RESET "\n";
+		cerr << ANSI_RED "Failed to encode image using ffmpeg." ANSI_RESET "\n";
 		exit(err);
 	}
 	
