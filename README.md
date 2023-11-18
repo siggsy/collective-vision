@@ -25,3 +25,8 @@ This work is based on a research paper ["A model of collective behavior based pu
 
 - [Third report](https://github.com/siggsy/collective-vision/milestone/3)
   - Finalize the report and prepare a presenation (~20min) containing the general overview of the project, achievments and challanges.
+
+
+## Report
+
+Everything relevant to the report is in the `/report` subfolder (including [pre-compiled pdf](https://github.com/siggsy/collective-vision/tree/main/report/collective_vision.pdf))
