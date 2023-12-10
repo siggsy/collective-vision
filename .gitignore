@@ -5,3 +5,5 @@ obj/
 # LSP stuff
 .cache/
 compile_commands.json
+
+.vscode/
