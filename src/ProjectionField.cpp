@@ -4,34 +4,6 @@
 using namespace std;
 
 
-// ----------------------------------- [ Constants ] ---------------------------------------- //
-
-
-static const double rad_to_deg = 180.0 / M_PI;
-
-
-// ----------------------------------- [ Functions ] ---------------------------------------- //
-
-
-Interval getProjection(const Boid& obj, const Boid& subj){
-	const real d = distance(obj.pos, subj.pos);
-	
-	// Local projection
-	const real r = subj.size;
-	const real alpha = atan(r / d) * rad_to_deg;
-	
-	// Rotation
-	const real xd = subj.pos.x - obj.pos.x;
-	real beta = acos(xd / d) * rad_to_deg;
-	
-	// acos returns [0,180], correct for when subject is below object
-	if (subj.pos.y < obj.pos.y)
-		beta = 360 - beta;
-	
-	return {beta - alpha, beta + alpha};
-}
-
-
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
@@ -47,6 +19,9 @@ static real normalize(real alpha){
 	}
 	return alpha;
 }
+
+
+// ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
 void insertInterval(ProjectionField& field, const Interval& interval){

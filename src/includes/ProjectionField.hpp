@@ -1,5 +1,5 @@
 #pragma once
-#include "Boid.hpp"
+#include "Vec2.hpp"
 #include <vector>
 
 
@@ -14,17 +14,11 @@ struct Interval {
 
 /**
  * @brief The array asserts the following rules:
- *         a) All intervalls are within range of [0,360].
+ *         a) All intervalls are within range of [0,360] and `start` < `end`.
  *         b) There are no overlapping intervals;
  *         c) The array is sorted by starting points of intervals;
  */
 typedef std::vector<Interval> ProjectionField;
-
-
-// ----------------------------------- [ Functions ] ---------------------------------------- //
-
-
-Interval getProjection(const Boid& obj, const Boid& subj);
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //

@@ -38,12 +38,12 @@ using namespace std;
 
 
 void f(Boid a, Boid b){
-	Interval i = getProjection(a, b);
+	Interval i = a.getProjection(b);
 	printf("(%2.0f,%2.0f):  [%6.1f, %6.1f]\n", b.pos.x, b.pos.y, i.start, i.end);
 }
 
 
-void projectionExample(){
+void projectionFieldExample(){
 	vector<Interval> p = {};
 	
 	insertInterval(p, {0,10});
@@ -98,7 +98,7 @@ void projectionExample(){
 
 int main(int argc, char const* const* argv){
 	printf("================================\n");
-	projectionExample();
+	projectionFieldExample();
 	return 0;
 }
 
