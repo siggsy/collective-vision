@@ -6,9 +6,12 @@ bin = bin
 program = program
 
 inc = -I ${src}/includes/
-gpp_options = -std=c++2a -g
-src_finder = find ${src} -iname "*.c" -or -iname "*.cpp"
 compilerPath = ${obj}/compiler.mk
+
+gpp_options = -std=c++2a -O2
+gpp_options = -std=c++2a -g -include "iostream" -include "ANSI.h" # DEBUG
+
+src_finder = find ${src} -iname "*.c" -or -iname "*.cpp"
 
 
 

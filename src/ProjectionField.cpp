@@ -79,11 +79,16 @@ void insertInterval(ProjectionField& field, const Interval& interval){
 		}
 	);
 	
-	// Largest interval, append to back
+	
+	// Interval is independant
 	if (p_first == field.end()){
 		field.emplace_back(start, end);
 		return;
+	} else if (end < p_first->start){
+		field.insert(p_first, {start, end});
+		return;
 	}
+	
 	
 	// Find last relevant element
 	auto p_last = p_first;

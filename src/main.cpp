@@ -51,8 +51,8 @@ void projectionExample(){
 	insertInterval(p, {40,50});
 	insertInterval(p, {60,70});
 	insertInterval(p, {80,90});
-	insertInterval(p, {100,110});
-	insertInterval(p, {120,130});
+	insertInterval(p, {150,160});
+	insertInterval(p, {200,250});
 	
 	printf("P: \n");
 	for (const Interval& i : p){
@@ -62,6 +62,16 @@ void projectionExample(){
 	printf("\n");
 	printf(ANSI_GREEN "insert [%d, %d]\n" ANSI_RESET, -45, 45);
 	insertInterval(p, {-45,45});
+	printf("\n");
+	
+	printf("P: \n");
+	for (const Interval& i : p){
+		printf("  [%.0f, %.0f]\n", i.start, i.end);
+	}
+	
+	printf("\n");
+	printf(ANSI_GREEN "insert [%d, %d]\n" ANSI_RESET, 180, 200);
+	insertInterval(p, {180,200});
 	printf("\n");
 	
 	printf("P: \n");
