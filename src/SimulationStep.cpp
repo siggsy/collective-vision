@@ -1,5 +1,6 @@
 #include "Simulation.hpp"
 #include "Boid.hpp"
+#include <cmath>
 
 using namespace std;
 
@@ -43,7 +44,10 @@ real calculateSpeed(const ProjectionField& P, const Vec2& velocity){
 	}
 	
 	// ∫_{-π}^{+π}{ cos(ϕ) (∂ϕP(ϕ))² dϕ }
-	real intB = 0; // TODO
+	real intB = 0;
+	for (const Interval& span : P){
+		intB += cos(span.start) + cos(span.end);
+	}
 	
 	const real intg = (α1*intB - intA) * α0;
 	return γ * (prefSpeed - speed) + intg;
@@ -61,7 +65,10 @@ real calculateAngle(const ProjectionField& P, const Vec2& velocity){
 	}
 	
 	// ∫_{-π}^{+π}{ sin(ϕ) (∂ϕP(ϕ))² dϕ }
-	real intB = 0; // TODO
+	real intB = 0;
+	for (const Interval& span : P){
+		intB += sin(span.start) + sin(span.end);
+	}
 	
 	return (β1*intB - intA) * β0;
 }
