@@ -1,21 +1,23 @@
 #include "ProjectionField.hpp"
+#include <numbers>
 #include <algorithm>
 
 using namespace std;
+using namespace std::numbers;
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-// Clamp angle between [0,360)
+// Clamp angle between [0,2π)
 static real normalize(real alpha){
 	if (alpha < 0){
-		alpha -= ((int)alpha / 360) * 360;
+		alpha -= (int)(alpha / (2*pi)) * (2*pi);
 		if (alpha < 0)
-			alpha += 360;
+			alpha += 2*pi;
 	}
-	else if (alpha >= 360){
-		alpha -= ((int)alpha / 360) * 360;
+	else if (alpha >= 2*pi){
+		alpha -= (int)(alpha / (2*pi)) * (2*pi);
 	}
 	return alpha;
 }
@@ -32,9 +34,9 @@ void insertInterval(ProjectionField& field, const Interval& interval){
 	// Instant quit
 	if (span <= 0){
 		return;
-	} else if (span >= 360){
+	} else if (span >= 2*pi){
 		field.clear();
-		field.emplace_back(0, 360);
+		field.emplace_back(0, (real)(2*pi));
 		return;
 	}
 	
@@ -42,10 +44,11 @@ void insertInterval(ProjectionField& field, const Interval& interval){
 	end = start + span;
 	
 	// Split into two parts
-	if (end > 360){
-		insertInterval(field, {0, end - 360});
-		end = 360;
+	if (end > 2*pi){
+		insertInterval(field, {0, end - (real)(2*pi)});
+		end = 2*pi;
 	}
+	
 	
 	// Find last element whose end point is larger than current start
 	auto p_first = lower_bound(field.begin(), field.end(), start,

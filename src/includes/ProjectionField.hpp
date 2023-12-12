@@ -14,7 +14,7 @@ struct Interval {
 
 /**
  * @brief The array asserts the following rules:
- *         a) All intervalls are within range of [0,360] and `start` < `end`.
+ *         a) All intervalls are within range of [0,2π] and `start` < `end`.
  *         b) There are no overlapping intervals;
  *         c) The array is sorted by starting points of intervals;
  */

@@ -4,12 +4,73 @@
 using namespace std;
 
 
+// ----------------------------------- [ Constants ] ---------------------------------------- //
+
+
+const real γ  = 1;
+const real α0 = 1;
+const real α1 = 1;
+const real β0 = 1;
+const real β1 = 1;
+
+
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-// TODO
-Vec2 calculateVelocity(const ProjectionField& field){
-	return {0,0};
+// ∫{a,b} cos(ϕ) dϕ
+real cosIntegral(real a, real b){
+	return sin(b) - sin(a);
+}
+
+
+// ∫{a,b} sin(ϕ) dϕ
+real sinIntegral(real a, real b){
+	return cos(a) - cos(b);
+}
+
+
+real calculateSpeed(const ProjectionField& P, const Vec2& velocity){
+	const real prefSpeed = Boid::prefSpeed;
+	const real speed = length(velocity);
+	
+	// -α0    * ∫(  cos(ϕ) P(ϕ)       dϕ)
+	// +α0 α1 * ∫(  cos(ϕ) (∂ϕP(ϕ))²  dϕ)
+	
+	// ∫_{-π}^{+π}{ cos(ϕ) P(ϕ) dϕ }
+	real intA = 0;
+	for (const Interval& span : P){
+		intA += cosIntegral(span.start, span.end);
+	}
+	
+	// ∫_{-π}^{+π}{ cos(ϕ) (∂ϕP(ϕ))² dϕ }
+	real intB = 0; // TODO
+	
+	const real intg = (α1*intB - intA) * α0;
+	return γ * (prefSpeed - speed) + intg;
+}
+
+
+real calculateAngle(const ProjectionField& P, const Vec2& velocity){
+	// -β0    * ∫(  sin(ϕ) P(ϕ)       dϕ)
+	// +β0 β1 * ∫(  sin(ϕ) (∂ϕP(ϕ))²  dϕ)
+	
+	// ∫_{-π}^{+π}{ sin(ϕ) P(ϕ) dϕ }
+	real intA = 0;
+	for (const Interval& span : P){
+		intA += sinIntegral(span.start, span.end);
+	}
+	
+	// ∫_{-π}^{+π}{ sin(ϕ) (∂ϕP(ϕ))² dϕ }
+	real intB = 0; // TODO
+	
+	return (β1*intB - intA) * β0;
+}
+
+
+Vec2 calculateVelocity(const ProjectionField& field, const Vec2& velocity){
+	const real speed = calculateSpeed(field, velocity);
+	const real angle = calculateAngle(field, velocity);
+	return Vec2(cos(angle), sin(angle)) * speed;
 }
 
 
@@ -38,9 +99,9 @@ unique_ptr<Boid> simulateOne(const vector<unique_ptr<Boid>>& prevState, int i){
 	const Boid& prevObj = *prevState[i];
 	
 	obj->size = prevObj.size;
-	obj->pos += prevObj.velocity;
 	obj->view = calculateProjectionField(prevState, prevObj);
-	obj->velocity = calculateVelocity(obj->view);
+	obj->velocity = calculateVelocity(obj->view, prevObj.velocity);
+	obj->pos = prevObj.pos + obj->velocity;
 	
 	return obj;
 }

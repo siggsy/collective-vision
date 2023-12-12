@@ -1,10 +1,7 @@
 #include "Boid.hpp"
+#include <numbers>
 
-
-// ----------------------------------- [ Constants ] ---------------------------------------- //
-
-
-static const double rad_to_deg = 180.0 / M_PI;
+using namespace std::numbers;
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
@@ -15,15 +12,15 @@ Interval Boid::getProjection(const Boid& other) const {
 	
 	// Local projection
 	const real r = other.size;
-	const real alpha = atan(r / d) * rad_to_deg;
+	const real alpha = (real)(atan(r / d));
 	
 	// Rotation
 	const real xd = other.pos.x - this->pos.x;
-	real beta = acos(xd / d) * rad_to_deg;
+	real beta = (real)(acos(xd / d));
 	
-	// acos returns [0,180], correct for when subject is below object
+	// acos returns [0,π], correct for when subject is below object
 	if (other.pos.y < this->pos.y)
-		beta = 360 - beta;
+		beta = (real)(2*pi) - beta;
 	
 	return {beta - alpha, beta + alpha};
 }

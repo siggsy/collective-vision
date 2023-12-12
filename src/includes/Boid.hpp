@@ -4,12 +4,16 @@
 
 
 class Boid {
+// ----------------------------------- [ Constants ] ---------------------------------------- //
+public:
+	static constexpr real prefSpeed = 1;
+	
 // ------------------------------------[ Properties ] --------------------------------------- //
 public:
 	real size = 1;
-	Vec2 pos;
+	Vec2 pos = {0,0};
 	Vec2 velocity = {0,0};
-	ProjectionField view;
+	ProjectionField view = {};
 	
 // ---------------------------------- [ Constructors ] -------------------------------------- //
 public:

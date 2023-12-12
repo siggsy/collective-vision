@@ -17,11 +17,24 @@ struct Vec2 {
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
+inline real length(const Vec2& v){
+	return sqrt(v.x*v.x + v.y*v.y);
+}
+
+
 inline real distance(const Vec2& a, const Vec2& b){
 	const real x = b.x - a.x;
 	const real y = b.y - a.y;
 	return sqrt(x*x + y*y);
 }
+
+
+/**
+ * @brief Calculate angle of the vector.
+ * @param v 
+ * @return Angle in range [0,2π]
+ */
+real angle(const Vec2& v);
 
 
 // ----------------------------------- [ Operators ] ---------------------------------------- //
