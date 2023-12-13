@@ -1,5 +1,6 @@
 #include "Simulation.hpp"
 #include "Boid.hpp"
+#include "Vec2.hpp"
 #include <cmath>
 
 using namespace std;
@@ -9,9 +10,9 @@ using namespace std;
 
 
 const real γ  = 1;
-const real α0 = 1;
+const real α0 = 0.1;
 const real α1 = 1;
-const real β0 = 1;
+const real β0 = 0.1;
 const real β1 = 1;
 
 
@@ -33,6 +34,7 @@ real sinIntegral(real a, real b){
 real calculateSpeed(const ProjectionField& P, const Vec2& velocity){
 	const real prefSpeed = Boid::prefSpeed;
 	const real speed = length(velocity);
+	const real φ = angle(velocity);
 	
 	// -α0    * ∫(  cos(ϕ) P(ϕ)       dϕ)
 	// +α0 α1 * ∫(  cos(ϕ) (∂ϕP(ϕ))²  dϕ)
@@ -40,13 +42,14 @@ real calculateSpeed(const ProjectionField& P, const Vec2& velocity){
 	// ∫_{-π}^{+π}{ cos(ϕ) P(ϕ) dϕ }
 	real intA = 0;
 	for (const Interval& span : P){
-		intA += cosIntegral(span.start, span.end);
+		printf("(%.1f, %.1f)\n", span.start, span.end);
+		intA += cosIntegral(span.start - φ, span.end - φ);
 	}
 	
 	// ∫_{-π}^{+π}{ cos(ϕ) (∂ϕP(ϕ))² dϕ }
 	real intB = 0;
 	for (const Interval& span : P){
-		intB += cos(span.start) + cos(span.end);
+		intB += cos(span.start - φ) + cos(span.end - φ);
 	}
 	
 	const real intg = (α1*intB - intA) * α0;
@@ -55,19 +58,21 @@ real calculateSpeed(const ProjectionField& P, const Vec2& velocity){
 
 
 real calculateAngle(const ProjectionField& P, const Vec2& velocity){
+	const real φ = angle(velocity);
+
 	// -β0    * ∫(  sin(ϕ) P(ϕ)       dϕ)
 	// +β0 β1 * ∫(  sin(ϕ) (∂ϕP(ϕ))²  dϕ)
 	
 	// ∫_{-π}^{+π}{ sin(ϕ) P(ϕ) dϕ }
 	real intA = 0;
 	for (const Interval& span : P){
-		intA += sinIntegral(span.start, span.end);
+		intA += sinIntegral(span.start - φ, span.end - φ);
 	}
 	
 	// ∫_{-π}^{+π}{ sin(ϕ) (∂ϕP(ϕ))² dϕ }
 	real intB = 0;
 	for (const Interval& span : P){
-		intB += sin(span.start) + sin(span.end);
+		intB += sin(span.start - φ) + sin(span.end - φ);
 	}
 	
 	return (β1*intB - intA) * β0;
@@ -75,9 +80,12 @@ real calculateAngle(const ProjectionField& P, const Vec2& velocity){
 
 
 Vec2 calculateVelocity(const ProjectionField& field, const Vec2& velocity){
-	const real speed = calculateSpeed(field, velocity);
-	const real angle = calculateAngle(field, velocity);
-	return Vec2(cos(angle), sin(angle)) * speed;
+	const real v = calculateSpeed(field, velocity);
+	const real a = calculateAngle(field, velocity);
+	const real φ = angle(velocity) + a;
+	const real speed = length(velocity) + v;
+	printf("v: %.1f\na: %.1f\n", v, a);
+	return Vec2(cos(φ), sin(φ)) * speed;
 }
 
 
@@ -108,7 +116,7 @@ unique_ptr<Boid> simulateOne(const vector<unique_ptr<Boid>>& prevState, int i){
 	obj->size = prevObj.size;
 	obj->view = calculateProjectionField(prevState, prevObj);
 	obj->velocity = calculateVelocity(obj->view, prevObj.velocity);
-	obj->pos = prevObj.pos + obj->velocity;
+	obj->pos = prevObj.pos + prevObj.velocity;
 	
 	return obj;
 }

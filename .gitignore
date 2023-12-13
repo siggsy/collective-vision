@@ -1,6 +1,11 @@
 # Build files
 bin/
 obj/
+.venv
+*.gif
+*.webp
+*.bin
+
 
 # LSP stuff
 .cache/

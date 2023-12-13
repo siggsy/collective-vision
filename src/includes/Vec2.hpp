@@ -51,12 +51,12 @@ inline Vec2 operator-(const Vec2& a, const Vec2& b){
 
 
 inline Vec2 operator*(const Vec2& a, real n){
-	return {a.x * n, a.x * n};
+	return {a.x * n, a.y * n};
 }
 
 
 inline Vec2 operator/(const Vec2& a, real n){
-	return {a.x / n, a.x / n};
+	return {a.x / n, a.y / n};
 }
 
 

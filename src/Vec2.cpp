@@ -14,7 +14,7 @@ real angle(const Vec2& v){
 	if (x == 0){
 		if (y > 0)
 			return pi/2;
-		else if (y < 90)
+		else if (y < 0)
 			return -pi/2;
 		else
 			return 0;

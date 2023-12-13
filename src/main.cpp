@@ -1,5 +1,9 @@
+#include <cstdio>
+#include <fstream>
 #include <iostream>
-#include <cmath>
+#include <numbers>
+#include <ostream>
+#include <random>
 
 #include "ANSI.h"
 // #include "Image.hpp"
@@ -7,6 +11,7 @@
 #include "Boid.hpp"
 #include "ProjectionField.hpp"
 #include "Simulation.hpp"
+#include "Vec2.hpp"
 
 
 using namespace std;
@@ -113,15 +118,68 @@ void simTest(){
 }
 
 
+// ----------------------------------- [ Functions ] ---------------------------------------- //
+
+
+vector<unique_ptr<Boid>> initRandom(const int n, const Vec2& start, const Vec2& end){
+	vector<unique_ptr<Boid>> f0 = {};
+
+	mt19937 gen(numbers::pi);
+	uniform_real_distribution<> disX(start.x, end.x);
+	uniform_real_distribution<> disY(start.y, end.y);
+	for (int i = 0; i < n; i++){
+		real x = disX(gen);
+		real y = disY(gen);
+		f0.emplace_back(new Boid(x, y));
+	}
+	
+	return f0;
+}
+
+void printState(ostream& out, const vector<unique_ptr<Boid>>& state){
+	for (int i = 0; i < state.size(); i++){
+		const Boid& b = *state[i];
+		printf("Velocity: [%.1f, %.1f]\n", b.velocity.x, b.velocity.y);
+		out.write(reinterpret_cast<const char*>( &b.pos.x ), sizeof(real));
+		out.write(reinterpret_cast<const char*>( &b.pos.y ), sizeof(real));
+	}
+	printf("\n");
+}
+
+
 // --------------------------------- [ Main Function ] -------------------------------------- //
 
 
 int main(int argc, char const* const* argv){
-	printf("================================\n");
-	
-	// projectionFieldExample();
-	simTest();
-	
+	string path;
+	if (argc <= 1) {
+		fprintf(stderr, "Missing file path\n");
+		exit(1);
+	}
+
+	// Either stdout or file
+	path = argv[1];
+	streambuf* buf;
+	ofstream of;
+	if (path == "-") {
+		buf = cout.rdbuf();
+	} else {
+		of.open(path, ios::out | ios::binary | ios::trunc);
+		buf = of.rdbuf();
+	}
+	ostream out(buf);
+
+
+	// Run simulation
+	vector<unique_ptr<Boid>> boids = initRandom(10, {0, 0}, {1000, 1000});
+	for (int i = 0; i < 1000; i++) {
+		printState(out, boids);
+		boids = simulationStep(boids);
+	}
+	printState(out, boids);
+
+
+	of.close();
 	return 0;
 }
 
