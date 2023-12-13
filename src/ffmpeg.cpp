@@ -54,7 +54,7 @@ static int ffEncode_parent(int childPid, int writeFD, const Image& img){
 		
 		// Write buffer ready
 		else if (FD_ISSET(writeFD, &fds)){
-			ssize_t n = write(writeFD, data, size-count);
+			ssize_t n = write(writeFD, data + count, size - count);
 			if (n > 0)
 				count += n;
 		}
@@ -68,12 +68,22 @@ static int ffEncode_parent(int childPid, int writeFD, const Image& img){
 	}
 	
 	close(writeFD);
-	
 	if (!exited){
 		waitpid(childPid, &status, 0);
 	}
 	
 	return status;
+}
+
+
+// ----------------------------------- [ Functions ] ---------------------------------------- //
+
+
+static char* str(const string& s){
+	char* cs = new char[s.size() + 1];
+	copy(s.begin(), s.end(), cs);
+	cs[s.size()] = 0;
+	return cs;
 }
 
 
@@ -111,7 +121,23 @@ int ffEncode(const Image& img, const string& outFile, bool silent){
 			close(2);
 		}
 		
-		execlp("ffmpeg", "ffmpeg", "-vcodec", "rawvideo", "-f", "rawvideo", "-pix_fmt", "rgba", "-s", "360x360", "-i", "-", "-vframes", "1", outFile.c_str(), "-y", NULL);
+		const char* args[] = {
+			"ffmpeg",
+			"-vcodec", "rawvideo",
+			"-f", "rawvideo",
+			"-pix_fmt", "rgba",
+			"-s", str(to_string(img.w) + "x" + to_string(img.h)),
+			"-i", "-",
+			"-vframes", "1",
+			str(outFile), "-y",
+			NULL
+		};
+		
+		for (int i = 0 ; i < 16 ; i++){
+			cout << args[i] << endl;
+		}
+		
+		execvp("ffmpeg", (char**)args);
 		exit(1);
 	}
 	
