@@ -3,8 +3,12 @@
 \templatetype{pnasresearcharticle} % Choose template 
 \selectlanguage{english}
 
-\usepackage{tikz}
-\usetikzlibrary{fit,shapes,positioning}
+
+\usepackage{graphicx}
+\usepackage{subfig}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue, linktocpage}
 
 \usepackage{import}
 \usepackage[subpreambles=true]{standalone}
@@ -136,7 +140,7 @@ This simulates a primitive form of vision.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\linewidth]{projection}
+    \includegraphics[width=0.9\linewidth]{projection.pdf}
     \caption{
        Projection field graph of a single object.
     }
@@ -178,7 +182,7 @@ It is independent of other individuals properties, and is described with the fol
 \end{equation}
 
 Here $G(P, \varphi)$ encodes how information from the visual field impacts the movement, while $h(\varphi)$ encodes properties of the perception-motor system, in our case, it describes how front-back distance impacts the speed and how left-right distance influences the heading direction of an agent.
-For convenience the equation is split into two parts:
+For convenience the equation is split into two parts
 \sloppy
 
 \begin{equation}
@@ -187,6 +191,7 @@ For convenience the equation is split into two parts:
         \left(
             -P_i(\varphi) \ + \ \alpha_1 (\partial_{\varphi} P_i(\varphi))^2
         \right) d\varphi
+    \label{eq:speed}
 \end{equation}
 
 
@@ -197,21 +202,52 @@ For convenience the equation is split into two parts:
         \left(
             -P_i(\varphi) \ + \ \beta_1 (\partial_{\varphi} P_i(\varphi))^2
         \right) d\varphi
+    \label{eq:angle}
 \end{equation}
 
 The first ($\Delta v_i$) describes speed delta, while the second ($\Delta \Psi_i$) describes heading angle delta.
 Consequently the heading vector is now removed, since it is encoded as the heading angle.
 
+As we will see further in the seminar, parameters $\alpha_1$ and $\beta_1$ influence the equilibrium distances.
+$\alpha_1$ influences the front-back distance equilibrium $\frac{r}{\alpha_1}$, while $\beta_1$ influences the left-right distance equilibrium $\frac{r}{\beta_1}$, where $r$ stands for agent radius.
 
 
+
+
+
+
+\subsection{Integration of P}
+
+One of the core elements of the simulation is calculating integrals of functions multiplied with $P$ such as $\int_{-\pi}^{\pi} cos(\varphi) P_i(\varphi)$ from equations \ref{eq:angle} and \ref{eq:speed}.
+Because the projection function $P$ contains contiguous regions of values $0$ or $1$, we can split the integral into multiple definite integrals where we calculate only the sections where $P$ has value of $1$.
+A visual representation of multiplying a trigonometric function with $P$ (in this case $cos$) can be seen on figure \ref{fig:integral}.
+This trick trivialises the integral calculation.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{integral.png}
+    \caption{
+      Multiplying a function (in this case $cos$) with some projection function $P$.
+    }
+    \label{fig:integral}
+\end{figure}
 
 
 
 
 \subsection{Implementation}
 
-The simulation will be implemented using C/C++.
+The simulation is implemented in C++.
+
+In the source paper \cite{main-paper}, the author calculates the projection function $P$ using ray casting.
+We have improved on this by projecting the objects directly by calculating the appropriate angles of vision for each object as show in figure \ref{fig:example-projection}.
+For each object we constructed an array of intervals where $P$ would have a value of $1$.
+By carefully merging these intervals we kept the array \textit{clean} as none of the intervals would intersect.
+With this array we could trivially calculate all the necessary components described in equations \ref{eq:speed} and \ref{eq:angle} using the method described in the previous section.
+
+
 The underlying simulation loop is also parallelizable, as agents are dependant only on the previous state of the simulation, therefore we can use multi-threading to increase the simulation speed, thus allowing us to simulate larger or longer simulations.
+
 
 
 
@@ -220,34 +256,47 @@ The underlying simulation loop is also parallelizable, as agents are dependant o
 
 \subsection{Simulation visualisation}
 
-Visualisation of the simulation will be done using FFmpeg\footnote{\url{https://ffmpeg.org/}}, which will encode an array of pixels (representing a state of the simulation) into an image or a video.
-The speed of image generation is not important to this seminar and will be done in a separate process. If a need arises, we could use OpenGL for displaying the simulation in real-time.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+% Visualisation of the simulation will be done using FFmpeg\footnote{\url{https://ffmpeg.org/}}, which will encode an array of pixels (representing a state of the simulation) into an image or a video.
+The speed of image generation is not important to this seminar and is therefore done separately in Python with Matplotlib.
+Every simulation figure has its own one minute long animation available on our Github repository \url{https://github.com/siggsy/collective-vision/tree/main/results}.
+It is worth noting that the size of the agents is not to scale.
 
 
 \section*{Results}
 
-None yet.
+Every simulation was run for 2000 steps with 50 agents randomly placed in a box bounded by $(0,0)$ and $(5,5)$.
+All agents had a radius of $0.5$ and had $v_\text{pref}$ set to $0.5$.
+Simulation parameters were set to the following values:
+\begin{enumerate}[label=$\bullet$]
+    \item $\alpha_1 = 0.08$
+    \item $\beta_1 = 0.08$
+    \item $\gamma = 0.95$
+\end{enumerate}
+
+In figure \ref{fig:simulation} we can see 3 different collective behaviours using $\alpha_0$ and $\beta_0$ parameters found in the paper this seminar is based on\cite{main-paper}.
+
+\begin{figure}[H]
+    \centering
+    \begin{tabular}{cc}
+        \includegraphics[width=0.47\textwidth]{line.png} &
+        \includegraphics[width=0.47\textwidth]{crystal.png} \\
+        (a) Polarized line ($\alpha_0 = 0.5$, $\beta_0 = 0.01$) & (b) Crystal ($\alpha_0 = 0.1$, $\beta_0 = 10$) \\
+        \multicolumn{2}{c}{
+            \includegraphics[width=0.5\textwidth]{swarm.png}
+        } \\
+        \multicolumn{2}{c}{(c) Swarm ($\alpha_0 = 0.5$, $\beta_0 = 1$)}
+    \end{tabular}
+    \caption{Last frames of the tested simulations}
+    \label{fig:simulation}
+\end{figure}
+
+In simulation (a) all agents move in one general direction and form a line.
+In contrast, in simulation (b) agents shake in-place and barely make any distance.
+Since the figures represent the last frames of the animation, this can be observed by checking their final coordinates.
+In the final simulation (c) agents are moving around freely while maintaining a swarm.
+
+
+
 
 % Uporabljamo višinske karte velikosti 512$\times$512 točk. Začetni teren se, predvsem zato ker je opravilo prepuščeno centralni procesni enoti, v povprečju zgradi v 3\,s. Ker se ta korak izvede samo enkrat v celotnem procesu to ni moteče. Nadaljna simulacija naravnih procesov se izvaja hitro; s frekvenco 94\,Hz (iteracij na sekundo), ko se izvaja zgolj proces hidravlične erozije, 108\,Hz, ko se izvaja zgolj proces termične erozije, in 85\,Hz, ko se izvajata oba procesa erozije sočasno. Simulacije rasti koralnega grebena ne izvajamo sočasno z erozijo, ampak ločeno, ta se izvaja s frekvenco 108\,Hz. Najhitrejša je vizualizacija, ki takrat, ko se ne izvaja nobena simulacija, dosega prikaz z 124\,fps (slik na sekundo). V celoti generiranje otoka želenega videza traja od 10 do 15 sekund. Vse vrednosti veljajo za prenosni računalnik s procesorjem Intel Core i7 4700-HQ, 8\,GB delovnega pomnilnika in grafično kartico nVidia GTX 760M, pri čemer smo v pogonu Unity 5 imeli nastavljen prikaz z najvišjo stopnjo podrobnosti.
 
@@ -301,6 +350,12 @@ None yet.
 
 \section*{Discussion}
 
+In this seminar we implemented and simulated a collective behaviour of birds using only their vision.
+We have improved on the original work by Bastien and Romanczuk \cite{main-paper} by replacing ray casting with direct projection.
+This improved the accuracy and calculation efficiency of the visual fields of the birds.
+
+The simulation is limited to only 2 dimensions as visualisation of more would be quite cumbersome. 
+
 % V delu smo predstavili postopek, ki na podlagi vhodnih parametrov generira teren v obliki otoka, na katerem v realnem času nato simulira hidravlično in termično erozijo ter za tem še rast koralnega grebena. Na teren dinamično nanaša teksture in izrisuje gladino morja. Zadani cilj, da ima generiran teren prepričljiv videz tropskega otoka z okoliškim koralnim grebenom, smo po našem mnenju dosegli. 
 
 % Končni teren je uporaben predvsem v strateških igrah, kjer nanj večinoma gledamo iz oddaljenosti. Teren namreč nima dovolj podrobnosti za prvo osebne igre, kjer se igralec po terenu sprehaja  in ga raziskuje. Čas potreben za generiranje otoka želenega videza je pri uporabi v računalniški igri
@@ -331,9 +386,8 @@ None yet.
 
 
 
-
-\acknow{JN je napisal uvod in skrbel za jezik, MK je izvedel analizo podatkov in izdelal slike, IC je implementiral algoritem in pognal eksperimente.}
-% \showacknow % Display the acknowledgments section
+\acknow{Žiga Leskovec fine tuned the simulation parameters and handled the simulation visualisation; Maksimiljan Vojvoda implemented the simulation loop.}
+\showacknow % Display the acknowledgments section
 
 % \pnasbreak splits and balances the columns before the references.
 % If you see unexpected formatting errors, try commenting out this line
