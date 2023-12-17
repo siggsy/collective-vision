@@ -9,8 +9,8 @@ using namespace std;
 // ----------------------------------- [ Constants ] ---------------------------------------- //
 
 
-const real γ  = 1;
-const real α0 = 0.1;
+const real γ  = 0.5;
+const real α0 = 0.01;
 const real α1 = 1;
 const real β0 = 0.1;
 const real β1 = 1;

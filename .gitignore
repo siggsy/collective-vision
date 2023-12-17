@@ -4,7 +4,9 @@ obj/
 .venv
 *.gif
 *.webp
+*.webm
 *.bin
+*.mp4
 
 
 # LSP stuff
