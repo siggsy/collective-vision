@@ -5,7 +5,7 @@
 // ----------------------------------- [ Structures ] --------------------------------------- //
 
 
-typedef float real;
+typedef double real;
 
 
 struct Vec2 {

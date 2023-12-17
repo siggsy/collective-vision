@@ -10,18 +10,19 @@ from pathlib import Path
 path = Path(file)
 steps = int(steps)
 n = int(n)
-points = np.fromfile(file, dtype=np.float32).reshape((steps, n, 2))
+points = np.fromfile(file, dtype=np.float64).reshape((steps, n, 2))
 
 fig, ax = plt.subplots()
 lines = []
-t = np.flip(np.linspace(0, 10, 1))
+tail = 20
+t = np.flip(np.linspace(0, 10, tail))
 for i in range(n):
-    segments = np.concatenate([[[points[0,i,:]]], [[points[1,i,:]]]], axis=1)
+    segments = np.array(list(zip(points[steps-tail+1:steps,i,:], points[steps-tail:steps-1,i,:])))
     lc = LineCollection(segments, cmap=plt.get_cmap('copper'), norm=Normalize(0,10), zorder=0)
     lc.set_array(t)
     lines.append(lc)
     plt.gca().add_collection(lc)
-lines.append(ax.scatter(points[100, :, 0], points[100, :, 1], color='orange', zorder=1))
+lines.append(ax.scatter(points[steps -1, :, 0], points[steps -1, :, 1], color='orange', zorder=1))
 
 global boxSizes
 global boxes
@@ -44,10 +45,10 @@ def boxAverage():
 
 
 def update(frame):
+    t = np.flip(np.linspace(0, 10, min(frame+1, tail)))
     for i in range(n):
         lc = lines[i]
-        t = np.flip(np.linspace(0, 10, frame))
-        segments = np.array(list(zip(points[0:frame-1,i,:], points[1:frame,i,:])))
+        segments = np.array(list(zip(points[max(0,frame-tail+2):frame+1,i,:], points[max(0,frame-tail+1):frame,i,:])))
         lc.set_segments(segments)
         lc.set_array(t)
     lines[n].set_offsets(points[frame, :])
@@ -70,14 +71,6 @@ def update(frame):
     addToSizes(_size)
     boxSize = boxAverage()
 
-    # if boxSize:
-    #     if boxSize > _size:
-    #         boxSize -= min(0.1, boxSize - _size)
-    #     else:
-    #         boxSize += min(0.1, _size - boxSize)
-    # else:
-    #     boxSize = _size
-
     xlim = (x - boxSize/2, x + boxSize/2)
     ylim = (y - boxSize/2, y + boxSize/2)
 
@@ -91,4 +84,5 @@ def update(frame):
 
 ani = animation.FuncAnimation(fig=fig, func=update, frames=steps, interval=30)
 ani.save(filename=f"{path.parent}/{path.stem}.mp4", writer="ffmpeg")
-plt.show()
+fig.savefig(f"{path.parent}/{path.stem}.png")
+# plt.show()

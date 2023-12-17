@@ -3,6 +3,7 @@ bin/
 obj/
 .venv
 *.gif
+*.png
 *.webp
 *.webm
 *.bin

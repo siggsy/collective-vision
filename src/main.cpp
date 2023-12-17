@@ -139,11 +139,9 @@ vector<unique_ptr<Boid>> initRandom(const int n, const Vec2& start, const Vec2& 
 void printState(ostream& out, const vector<unique_ptr<Boid>>& state){
 	for (int i = 0; i < state.size(); i++){
 		const Boid& b = *state[i];
-		printf("Velocity: [%.1f, %.1f]\n", b.velocity.x, b.velocity.y);
 		out.write(reinterpret_cast<const char*>( &b.pos.x ), sizeof(real));
 		out.write(reinterpret_cast<const char*>( &b.pos.y ), sizeof(real));
 	}
-	printf("\n");
 }
 
 
@@ -171,13 +169,11 @@ int main(int argc, char const* const* argv){
 
 
 	// Run simulation
-	vector<unique_ptr<Boid>> boids = initRandom(10, {0, 0}, {1000, 1000});
-	for (int i = 0; i < 1000; i++) {
+	vector<unique_ptr<Boid>> boids = initRandom(50, {0, 0}, {5, 5});
+	for (int i = 0; i < 2000; i++) {
 		printState(out, boids);
 		boids = simulationStep(boids);
 	}
-	printState(out, boids);
-
 
 	of.close();
 	return 0;

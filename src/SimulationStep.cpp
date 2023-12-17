@@ -8,12 +8,11 @@ using namespace std;
 
 // ----------------------------------- [ Constants ] ---------------------------------------- //
 
-
-const real γ  = 0.5;
-const real α0 = 0.01;
-const real α1 = 1;
-const real β0 = 0.1;
-const real β1 = 1;
+const real γ  = 0.95; // Speed relaxation rate
+const real α0 = 0.5; // Attraction/repultion (speed)
+const real α1 = 0.08;
+const real β0 = 0.1; // Attraction/repultion (angle)
+const real β1 = 0.08;
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
@@ -42,7 +41,6 @@ real calculateSpeed(const ProjectionField& P, const Vec2& velocity){
 	// ∫_{-π}^{+π}{ cos(ϕ) P(ϕ) dϕ }
 	real intA = 0;
 	for (const Interval& span : P){
-		printf("(%.1f, %.1f)\n", span.start, span.end);
 		intA += cosIntegral(span.start - φ, span.end - φ);
 	}
 	
@@ -84,7 +82,6 @@ Vec2 calculateVelocity(const ProjectionField& field, const Vec2& velocity){
 	const real a = calculateAngle(field, velocity);
 	const real φ = angle(velocity) + a;
 	const real speed = length(velocity) + v;
-	printf("v: %.1f\na: %.1f\n", v, a);
 	return Vec2(cos(φ), sin(φ)) * speed;
 }
 
