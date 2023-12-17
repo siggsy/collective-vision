@@ -31,6 +31,6 @@ This work is based on a research paper ["A model of collective behavior based pu
 
 Everything relevant to the report is in the `/report` subfolder (including [pre-compiled pdf](https://github.com/siggsy/collective-vision/tree/main/report/collective_vision.pdf))
 
-# Animations
+## Animations
 
-Animations are available in `/results` subfolder
+Animations are available in `/results` subfolder.
