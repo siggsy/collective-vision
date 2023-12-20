@@ -6,6 +6,7 @@
 #include <random>
 
 #include "ANSI.h"
+#include "CLI.hpp"
 #include "Boid.hpp"
 #include "ProjectionField.hpp"
 #include "Simulation.hpp"
@@ -23,6 +24,15 @@ constexpr double rad_to_deg = 180.0/M_PI;
 
 #define RAD(ϕ)	(ϕ*deg_to_rad)
 #define DEG(ϕ)	(ϕ*rad_to_deg)
+
+
+// ----------------------------------- [ Functions ] ---------------------------------------- //
+
+
+void error(const char* msg){
+	printf(ANSI_BOLD "%s: " ANSI_RED "error: " ANSI_RESET, CLI::programName.c_str());
+	printf("%s\n", msg);
+}
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
@@ -148,35 +158,39 @@ void coloredProjectionTest(ostream& out){
 }
 
 
+// ----------------------------------- [ Functions ] ---------------------------------------- //
+
+
+unique_ptr<ostream> openOutput(const string& path){
+	if (path.empty())
+		return make_unique<ofstream>();
+	else if (path == "-")
+		return make_unique<ostream>(cout.rdbuf());
+	else
+		return make_unique<ofstream>(path);
+}
+
+
 // --------------------------------- [ Main Function ] -------------------------------------- //
 
 
 int main(int argc, char const* const* argv){
-	if (argc <= 1) {
-		fprintf(stderr, "Missing file path\n");
-		exit(1);
+	try {
+		CLI::parse(argc, argv);
+	} catch (runtime_error& e){
+		error(e.what());
+		return 1;
 	}
-
-	// Either stdout or file
-	const char* path = argv[1];
-	streambuf* buf;
-	ofstream of;
-	if (path == "-") {
-		buf = cout.rdbuf();
-	} else {
-		of.open(path, ios::out | ios::binary | ios::trunc);
-		buf = of.rdbuf();
-	}
-	ostream out = ostream(buf);
+	
+	unique_ptr<ostream> out = openOutput(CLI::output);
 	
 	// Run simulation
 	vector<unique_ptr<Boid>> boids = initRandom(50, {0, 0}, {5, 5});
 	for (int i = 0; i < 2000; i++) {
-		printState(out, boids);
+		printState(*out, boids);
 		boids = simulationStep(boids);
 	}
 
-	of.close();
 	return 0;
 }
 
