@@ -8,6 +8,7 @@ using namespace std;
 
 // ----------------------------------- [ Constants ] ---------------------------------------- //
 
+
 const real γ  = 0.95; // Speed relaxation rate
 const real α0 = 0.5; // Attraction/repultion (speed)
 const real α1 = 0.08;
@@ -19,13 +20,13 @@ const real β1 = 0.08;
 
 
 // ∫{a,b} cos(ϕ) dϕ
-real cosIntegral(real a, real b){
+inline real cosIntegral(real a, real b){
 	return sin(b) - sin(a);
 }
 
 
 // ∫{a,b} sin(ϕ) dϕ
-real sinIntegral(real a, real b){
+inline real sinIntegral(real a, real b){
 	return cos(a) - cos(b);
 }
 

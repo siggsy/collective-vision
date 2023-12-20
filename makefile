@@ -24,10 +24,10 @@ all: ${bin}/${program}
 run: ./${bin}/${program}
 	./${bin}/${program}
 
-.PHONY: ff
-ff: pic.bin
-	# cat "pic.bin" | ffmpeg -vcodec rawvideo -f rawvideo -pix_fmt rgba -s 360x360 -i - -vframes 1 out.png -y
-	ffmpeg -vcodec rawvideo -f rawvideo -pix_fmt rgba -s 360x360 -i "pic.bin" -vframes 1 -vcodec png out.png -y
+# .PHONY: ff
+# ff: pic.bin
+# 	# cat "pic.bin" | ffmpeg -vcodec rawvideo -f rawvideo -pix_fmt rgba -s 360x360 -i - -vframes 1 out.png -y
+# 	ffmpeg -vcodec rawvideo -f rawvideo -pix_fmt rgba -s 360x360 -i "pic.bin" -vframes 1 -vcodec png out.png -y
 
 
 
