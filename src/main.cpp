@@ -7,6 +7,7 @@
 
 #include "ANSI.h"
 #include "CLI.hpp"
+#include "help.h"
 #include "Boid.hpp"
 #include "ProjectionField.hpp"
 #include "Simulation.hpp"
@@ -29,9 +30,15 @@ constexpr double rad_to_deg = 180.0/M_PI;
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-void error(const char* msg){
+template<typename ...T>
+void error(const char* format, T... args){
 	printf(ANSI_BOLD "%s: " ANSI_RED "error: " ANSI_RESET, CLI::programName.c_str());
-	printf("%s\n", msg);
+	printf(format, args...);
+}
+
+
+void printHelp(){
+	printf(help, CLI::programName.c_str());
 }
 
 
@@ -171,6 +178,23 @@ unique_ptr<ostream> openOutput(const string& path){
 }
 
 
+SimulationParameters parseCLIParams(const vector<string>& args){
+	SimulationParameters params = {};
+	
+	int color;
+	SimParam val;
+	
+	for (const string& s : args){
+		if (parseParameter(s, &color, &val))
+			params.emplace(color, val);
+		else
+			error("Failed to parse simulation parameter '" ANSI_YELLOW "%s" ANSI_RESET "'.\n", s.c_str());
+	}
+	
+	return params;
+}
+
+
 // --------------------------------- [ Main Function ] -------------------------------------- //
 
 
@@ -178,10 +202,16 @@ int main(int argc, char const* const* argv){
 	try {
 		CLI::parse(argc, argv);
 	} catch (runtime_error& e){
-		error(e.what());
+		error("%s\n", e.what());
 		return 1;
 	}
 	
+	if (CLI::help){
+		printHelp();
+		return 0;
+	}
+	
+	SimulationParameters params = parseCLIParams(CLI::colors);
 	unique_ptr<ostream> out = openOutput(CLI::output);
 	
 	// Run simulation
