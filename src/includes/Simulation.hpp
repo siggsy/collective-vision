@@ -30,16 +30,20 @@ typedef std::unordered_map<int,SimParam> SimulationParameters;
 
 /**
  * @brief Progress the simulation to the next step.
+ *        Disregard object colors.
+ * @param param Parameters for all objects.
  * @param objects Previous simulation state.
  * @return New simulation state with new objects. Object order is not preserved.
  */
-SimulationState simulationStep(const SimulationState& objects);
+SimulationState simulationStep(const SimParam& param, const SimulationState& objects);
 
 
 /**
  * @brief Progress the simulation to the next step.
- *        Use parameters for each colored view field interval separately. 
+ *        Use separate parameters for each colored view interval.
+ * @param params Map of color to parameters for each possible color of the objects.
  * @param objects Previous simulation state.
+ * @throws `std::out_of_range` When `params` does not contain an entry for a color of an interval or object.
  * @return New simulation state with new objects. Object order is not preserved.
  */
 SimulationState simulationStep(const SimulationParameters& params, const SimulationState& objects);

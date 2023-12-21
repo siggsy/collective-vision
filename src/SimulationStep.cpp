@@ -1,19 +1,12 @@
 #include "Simulation.hpp"
+#include <cmath>
+#include <stdexcept>
+
 #include "Boid.hpp"
 #include "Vec2.hpp"
-#include <cmath>
+
 
 using namespace std;
-
-
-// ----------------------------------- [ Constants ] ---------------------------------------- //
-
-
-const real γ  = 0.95; // Speed relaxation rate
-const real α0 = 0.5; // Attraction/repultion (speed)
-const real α1 = 0.08;
-const real β0 = 0.1; // Attraction/repultion (angle)
-const real β1 = 0.08;
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
@@ -31,7 +24,22 @@ inline real sinIntegral(real a, real b){
 }
 
 
-real calculateSpeed(const ProjectionField& P, const Vec2& velocity){
+/**
+ * @throws `std::out_of_range` When `params` does not contain an entry for a color of an interval or object.
+ */
+inline const SimParam& getParam(const SimulationParameters& params, int color){
+	auto p = params.find(color);
+	if (p != params.end())
+		return p->second;
+	else
+		throw out_of_range("Missing simulation parameters for color '" + to_string(color) + "'.");
+}
+
+
+// ----------------------------------- [ Functions ] ---------------------------------------- //
+
+
+real calculateSpeed(const SimParam& param, const ProjectionField& P, const Vec2& velocity, int color){
 	const real prefSpeed = Boid::prefSpeed;
 	const real speed = length(velocity);
 	const real φ = angle(velocity);
@@ -51,12 +59,42 @@ real calculateSpeed(const ProjectionField& P, const Vec2& velocity){
 		intB += cos(span.start - φ) + cos(span.end - φ);
 	}
 	
-	const real intg = (α1*intB - intA) * α0;
-	return γ * (prefSpeed - speed) + intg;
+	const real intg = (param.α1 * intB - intA) * param.α0;
+	return param.γ * (prefSpeed - speed) + intg;
 }
 
 
-real calculateAngle(const ProjectionField& P, const Vec2& velocity){
+/**
+ * @throws `std::out_of_range` When `params` does not contain an entry for a color of an interval or object.
+ */
+real calculateSpeed(const SimulationParameters& params, const ProjectionField& P, const Vec2& velocity, int color){
+	const real prefSpeed = Boid::prefSpeed;
+	const real speed = length(velocity);
+	const real φ = angle(velocity);
+	
+	// ∫_{-π}^{+π}( -α0 cos(ϕ) P(ϕ) dϕ)
+	real intA = 0;
+	for (const Interval& span : P){
+		const SimParam& param = getParam(params, span.color);
+		intA -= cosIntegral(span.start - φ, span.end - φ) * param.α0;
+	}
+	
+	// ∫_{-π}^{+π}( +α0 α1 cos(ϕ) (∂ϕP(ϕ))² dϕ)
+	real intB = 0;
+	for (const Interval& span : P){
+		const SimParam& param = getParam(params, span.color);
+		intB += (cos(span.start - φ) + cos(span.end - φ)) * param.α0 * param.α1;
+	}
+	
+	const SimParam& param = getParam(params, color);
+	return param.γ * (prefSpeed - speed) + (intA + intB);
+}
+
+
+// ----------------------------------- [ Functions ] ---------------------------------------- //
+
+
+real calculateAngle(const SimParam& param, const ProjectionField& P, const Vec2& velocity){
 	const real φ = angle(velocity);
 
 	// -β0    * ∫(  sin(ϕ) P(ϕ)       dϕ)
@@ -74,28 +112,50 @@ real calculateAngle(const ProjectionField& P, const Vec2& velocity){
 		intB += sin(span.start - φ) + sin(span.end - φ);
 	}
 	
-	return (β1*intB - intA) * β0;
+	return (param.β1 * intB - intA) * param.β0;
 }
 
 
-Vec2 calculateVelocity(const ProjectionField& field, const Vec2& velocity){
-	const real v = calculateSpeed(field, velocity);
-	const real a = calculateAngle(field, velocity);
-	const real φ = angle(velocity) + a;
-	const real speed = length(velocity) + v;
-	return Vec2(cos(φ), sin(φ)) * speed;
+real calculateAngle(const SimulationParameters& params, const ProjectionField& P, const Vec2& velocity){
+	const real φ = angle(velocity);
+
+	// ∫_{-π}^{+π}( -β0 sin(ϕ) P(ϕ) dϕ)
+	real intA = 0;
+	for (const Interval& span : P){
+		const SimParam& param = getParam(params, span.color);
+		intA -= sinIntegral(span.start - φ, span.end - φ) * param.β0;
+	}
+	
+	// ∫_{-π}^{+π}( +β0 β1 sin(ϕ) (∂ϕP(ϕ))² dϕ)
+	real intB = 0;
+	for (const Interval& span : P){
+		const SimParam& param = getParam(params, span.color);
+		intB += (sin(span.start - φ) + sin(span.end - φ)) * param.β0 * param.β1;
+	}
+	
+	return intA + intB;
 }
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-ProjectionField calculateProjectionField(const vector<unique_ptr<Boid>>& state, const Boid& boid){
+template<typename PARAMS>
+Vec2 calculateVelocity(const PARAMS& params, const ProjectionField& field, const Vec2& velocity, int color){
+	const real v = calculateSpeed(params, field, velocity, color);
+	const real a = calculateAngle(params, field, velocity);
+	const real φ = angle(velocity) + a;
+	const real speed = length(velocity) + v;
+	return Vec2(cos(φ), sin(φ)) * speed;
+}
+
+
+ProjectionField calculateProjectionField(const SimulationState& state, const Boid& boid){
 	ProjectionField field = {};
 	
-	for (int i = 0 ; i < state.size() ; i++){
-		if (state[i].get() != &boid){
-			Interval p = boid.getProjection(*state[i]);
+	for (const unique_ptr<Boid>& b : state){
+		if (b.get() != &boid){
+			Interval p = boid.getProjection(*b);
 			insertInterval(field, p);
 		}
 	}
@@ -107,31 +167,43 @@ ProjectionField calculateProjectionField(const vector<unique_ptr<Boid>>& state, 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-unique_ptr<Boid> simulateOne(const vector<unique_ptr<Boid>>& prevState, int i){
+template<typename PARAMS>
+unique_ptr<Boid> simulateOne(const PARAMS& params, const vector<unique_ptr<Boid>>& prevState, int i){
 	unique_ptr<Boid> obj = make_unique<Boid>();
 	const Boid& prevObj = *prevState[i];
 	
 	obj->size = prevObj.size;
+	obj->color = prevObj.color;
 	obj->view = calculateProjectionField(prevState, prevObj);
-	obj->velocity = calculateVelocity(obj->view, prevObj.velocity);
+	obj->velocity = calculateVelocity(params, obj->view, prevObj.velocity, obj->color);
 	obj->pos = prevObj.pos + prevObj.velocity;
 	
 	return obj;
 }
 
-
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
 // TODO: threads
-vector<unique_ptr<Boid>> simulationStep(const vector<unique_ptr<Boid>>& prevState){
-	vector<unique_ptr<Boid>> state = {};
+template<typename PARAMS>
+static SimulationState _simulationStep(const PARAMS& params, const SimulationState& prevState){
+	SimulationState state = {};
 	
 	for (int i = 0 ; i < prevState.size() ; i++){
-		state.emplace_back(simulateOne(prevState, i));
+		state.emplace_back(simulateOne(params, prevState, i));
 	}
 	
 	return state;
+}
+
+
+SimulationState simulationStep(const SimParam& param, const SimulationState& objects){
+	return _simulationStep(param, objects);
+}
+
+
+SimulationState simulationStep(const SimulationParameters& params, const SimulationState& objects){
+	return _simulationStep(params, objects);
 }
 
 

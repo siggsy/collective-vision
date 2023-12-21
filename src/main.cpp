@@ -7,7 +7,6 @@
 
 #include "ANSI.h"
 #include "CLI.hpp"
-#include "help.h"
 #include "Boid.hpp"
 #include "ProjectionField.hpp"
 #include "Simulation.hpp"
@@ -25,6 +24,18 @@ constexpr double rad_to_deg = 180.0/M_PI;
 
 #define RAD(ϕ)	(ϕ*deg_to_rad)
 #define DEG(ϕ)	(ϕ*rad_to_deg)
+
+
+extern const char help[];
+
+
+SimParam defaultSimulationParameters = {
+	.γ  = 0.95,	// Speed relaxation rate
+	.α0 = 0.5,	// Attraction/repultion (speed)
+	.α1 = 0.08,
+	.β0 = 0.1,	// Attraction/repultion (angle)
+	.β1 = 0.08
+};
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
@@ -60,7 +71,7 @@ vector<unique_ptr<Boid>> initRandom(const int n, const Vec2& start, const Vec2& 
 	return f0;
 }
 
-void printState(ostream& out, const vector<unique_ptr<Boid>>& state){
+void writeState(ostream& out, const vector<unique_ptr<Boid>>& state){
 	for (int i = 0; i < state.size(); i++){
 		const Boid& b = *state[i];
 		out.write((char*)(&b.pos.x), sizeof(real));
@@ -72,97 +83,70 @@ void printState(ostream& out, const vector<unique_ptr<Boid>>& state){
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-void printProjectionField(ostream& out, const ProjectionField& field){
-	for (const Interval& i : field)
-		out.write((const char*)(&i), sizeof(i));
+void runSim(SimulationParameters& params, ostream& out){
+	vector<unique_ptr<Boid>> boids = initRandom(50, {0, 0}, {5, 5});
+	const int N = 2000;
+	
+	if (params.empty()){
+		for (int i = 0; i < N; i++) {
+			writeState(out, boids);
+			boids = simulationStep(defaultSimulationParameters, boids);
+		}
+	} else {
+		for (int i = 0; i < N; i++) {
+			writeState(out, boids);
+			boids = simulationStep(params, boids);
+		}
+	}
+	
 }
 
 
-void printProjectionField(ostream& out, const ColoredProjectionField& field){
-	for (const ColoredInterval& i : field){
-		out.write((const char*)(&i.start), sizeof(i.start));
-		out.write((const char*)(&i.end),   sizeof(i.end));
-		real color = i.color;
-		out.write((const char*)(&color), sizeof(color));
+// ----------------------------------- [ Functions ] ---------------------------------------- //
+
+
+void writeProjectionField(ostream& out, const ProjectionField& field, bool colors = true){
+	if (colors){
+		for (const Interval& i : field){
+			out.write((const char*)(&i.start), sizeof(i.start));
+			out.write((const char*)(&i.end), sizeof(i.end));
+			real color = i.color;
+			out.write((const char*)(&color), sizeof(color));
+		}
+	} else {
+		for (const Interval& i : field){
+			out.write((const char*)(&i.start), sizeof(i.start));
+			out.write((const char*)(&i.end), sizeof(i.end));
+		}
 	}
 }
 
 
-void projecionTest(ostream& out){
-	ProjectionField p = {};
-	insertInterval(p, {RAD(0),RAD(10)});
-	insertInterval(p, {RAD(20),RAD(30)});
-	insertInterval(p, {RAD(40),RAD(50)});
-	insertInterval(p, {RAD(60),RAD(70)});
-	insertInterval(p, {RAD(80),RAD(90)});
-	insertInterval(p, {RAD(150),RAD(160)});
-	insertInterval(p, {RAD(200),RAD(250)});
-	
-	printf("P: \n");
-	for (const Interval& i : p){
-		printf("  [%.1f, %.1f]\n", DEG(i.start), DEG(i.end));
-	}
-	
-	printf("\n");
-	printf(ANSI_GREEN "insert [%d, %d]\n" ANSI_RESET, -45, 45);
-	insertInterval(p, {RAD(-45), RAD(45)});
-	printf("\n");
-	
-	printf("P: \n");
-	for (const Interval& i : p){
-		printf("  [%.1f, %.1f]\n", DEG(i.start), DEG(i.end));
-	}
-	
-	printf("\n");
-	printf(ANSI_GREEN "insert [%d, %d]\n" ANSI_RESET, 180, 199);
-	insertInterval(p, {RAD(180), RAD(199)});
-	printf("\n");
-	
-	printf("P: \n");
-	for (const Interval& i : p){
-		printf("  [%.1f, %.1f]\n", DEG(i.start), DEG(i.end));
-	}
-	
-	// printf("\n");
-	// printf(ANSI_GREEN "insert [%d, %d]\n" ANSI_RESET, -360, 360);
-	// insertInterval(p, {RAD(-360), RAD(360)});
-	// printf("\n");
-	
-	// printf("P: \n");
-	// for (const Interval& i : p){
-	// 	printf("  [%.1f, %.1f]\n", DEG(i.start), DEG(i.end));
-	// }
-	
-	printProjectionField(out, p);
-}
-
-
-
-void coloredProjectionTest(ostream& out){
-	ColoredProjectionField p = {};
-	p.emplace_back(RAD(50),  RAD(100),  10, 1);
-	p.emplace_back(RAD(150), RAD(200), -10, 2);
-	p.emplace_back(RAD(250), RAD(300),  10, 3);
+// void coloredProjectionTest(ostream& out){
+// 	ColoredProjectionField p = {};
+// 	p.emplace_back(RAD(50),  RAD(100),  10, 1);
+// 	p.emplace_back(RAD(150), RAD(200), -10, 2);
+// 	p.emplace_back(RAD(250), RAD(300),  10, 3);
 	
 	
-	printf("P: \n");
-	for (const ColoredInterval& i : p){
-		printf("  [%5.1f, %5.1f]  %d\n", DEG(i.start), DEG(i.end), i.color);
-	}
+// 	printf("P: \n");
+// 	for (const ColoredInterval& i : p){
+// 		printf("  [%5.1f, %5.1f]  %d\n", DEG(i.start), DEG(i.end), i.color);
+// 	}
 	
 	
-	insertInterval(p, {RAD(90), RAD(110), 5, 0});
-	insertInterval(p, {RAD(140), RAD(201), 5, 0});
-	insertInterval(p, {RAD(280), RAD(290), 5, 0});
+// 	insertInterval(p, {RAD(90), RAD(110), 5, 0});
+// 	insertInterval(p, {RAD(140), RAD(201), 5, 0});
+// 	insertInterval(p, {RAD(280), RAD(290), 5, 0});
 	
 	
-	printf("P: \n");
-	for (const ColoredInterval& i : p){
-		printf("  [%5.1f, %5.1f]  %d\n", DEG(i.start), DEG(i.end), i.color);
-	}
+// 	printf("P: \n");
+// 	for (const ColoredInterval& i : p){
+// 		printf("  [%5.1f, %5.1f]  %d\n", DEG(i.start), DEG(i.end), i.color);
+// 	}
 	
-	printProjectionField(out, p);
-}
+// 	printProjectionField(out, p);
+// }
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
@@ -178,20 +162,21 @@ unique_ptr<ostream> openOutput(const string& path){
 }
 
 
-SimulationParameters parseCLIParams(const vector<string>& args){
-	SimulationParameters params = {};
-	
+bool parseCLIParams(const vector<string>& args, SimulationParameters& out_params){
 	int color;
 	SimParam val;
+	bool status = true;
 	
 	for (const string& s : args){
-		if (parseParameter(s, &color, &val))
-			params.emplace(color, val);
-		else
+		if (parseParameter(s, &color, &val)){
+			out_params.emplace(color, val);
+		} else {
 			error("Failed to parse simulation parameter '" ANSI_YELLOW "%s" ANSI_RESET "'.\n", s.c_str());
+			status = false;
+		}
 	}
 	
-	return params;
+	return status;
 }
 
 
@@ -201,7 +186,7 @@ SimulationParameters parseCLIParams(const vector<string>& args){
 int main(int argc, char const* const* argv){
 	try {
 		CLI::parse(argc, argv);
-	} catch (runtime_error& e){
+	} catch (const exception& e){
 		error("%s\n", e.what());
 		return 1;
 	}
@@ -211,16 +196,21 @@ int main(int argc, char const* const* argv){
 		return 0;
 	}
 	
-	SimulationParameters params = parseCLIParams(CLI::colors);
 	unique_ptr<ostream> out = openOutput(CLI::output);
 	
-	// Run simulation
-	vector<unique_ptr<Boid>> boids = initRandom(50, {0, 0}, {5, 5});
-	for (int i = 0; i < 2000; i++) {
-		printState(*out, boids);
-		boids = simulationStep(boids);
+	SimulationParameters params = {};
+	if (!parseCLIParams(CLI::colors, params)){
+		return 1;
 	}
-
+	
+	
+	try {
+		runSim(params, *out);
+	} catch (const exception& e){
+		error("%s\n", e.what());
+		return 1;
+	}
+	
 	return 0;
 }
 
