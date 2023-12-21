@@ -7,7 +7,8 @@
 extern const char help[] =
 G(B("Usage: ")) Y("%s") " [options]\n"
 "  " B("--help")", " B("-h") " ...................... Print program manual.\n"
-"  " B("--color <params>") ", " B("-c <params>")" ... Set params for a colored object.\n"
+"  " B("--color") " <params>, " B("-c") "<params> ... Set params for a colored object.\n"
 "                                     Format: '<color>(<α0>,<α1>,<β0>,<β1>,<γ>)'\n"
-"\n"
+"  " B("--output") " <path>, " B("-o") " <path> ..... Set output file path for storing binary simulation data for each step.\n"
+"                                     Use '-' for stdout.\n"
 ;
