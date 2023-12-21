@@ -1,6 +1,7 @@
 #pragma once
-#include <vector>
+#include <tuple>
 #include <memory>
+#include <vector>
 #include <unordered_map>
 
 #include "Vec2.hpp"
@@ -21,8 +22,10 @@ struct SimParam {
 };
 
 
+typedef std::tuple<int,int> ParamKey;
+typedef std::unordered_map<ParamKey,SimParam> SimulationParameters;
+
 typedef std::vector<std::unique_ptr<Boid>> SimulationState;
-typedef std::unordered_map<int,SimParam> SimulationParameters;
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
@@ -57,7 +60,18 @@ SimulationState simulationStep(const SimulationParameters& params, const Simulat
  *        Example: `0(0.5, 0.08, 0.1, 0.08, 0.95)`
  * @return SimParam if parsing successful else null.
  */
-bool parseParameter(const std::string&, int* outColor, SimParam* outParam);
+bool parseParameter(const std::string&, std::tuple<int,int>* outColor, SimParam* outParam);
+
+
+// ----------------------------------- [ Functions ] ---------------------------------------- //
+
+
+template<>
+struct std::hash<ParamKey> {
+	std::size_t operator()(const ParamKey& o) const noexcept {
+		return std::get<0>(o) ^ std::get<1>(o);
+	}
+};
 
 
 // ------------------------------------------------------------------------------------------ //

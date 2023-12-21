@@ -27,12 +27,12 @@ inline real sinIntegral(real a, real b){
 /**
  * @throws `std::out_of_range` When `params` does not contain an entry for a color of an interval or object.
  */
-inline const SimParam& getParam(const SimulationParameters& params, int color){
-	auto p = params.find(color);
+inline const SimParam& getParam(const SimulationParameters& params, int self, int other){
+	auto p = params.find({self, other});
 	if (p != params.end())
 		return p->second;
 	else
-		throw out_of_range("Missing simulation parameters for color '" + to_string(color) + "'.");
+		throw out_of_range("Missing simulation parameters for color mapping '(" + to_string(self) + ":" + to_string(other) + ")'.");
 }
 
 
@@ -75,18 +75,18 @@ real calculateSpeed(const SimulationParameters& params, const ProjectionField& P
 	// ∫_{-π}^{+π}( -α0 cos(ϕ) P(ϕ) dϕ)
 	real intA = 0;
 	for (const Interval& span : P){
-		const SimParam& param = getParam(params, span.color);
+		const SimParam& param = getParam(params, color, span.color);
 		intA -= cosIntegral(span.start - φ, span.end - φ) * param.α0;
 	}
 	
 	// ∫_{-π}^{+π}( +α0 α1 cos(ϕ) (∂ϕP(ϕ))² dϕ)
 	real intB = 0;
 	for (const Interval& span : P){
-		const SimParam& param = getParam(params, span.color);
+		const SimParam& param = getParam(params, color, span.color);
 		intB += (cos(span.start - φ) + cos(span.end - φ)) * param.α0 * param.α1;
 	}
 	
-	const SimParam& param = getParam(params, color);
+	const SimParam& param = getParam(params, color, color);
 	return param.γ * (prefSpeed - speed) + (intA + intB);
 }
 
@@ -94,7 +94,7 @@ real calculateSpeed(const SimulationParameters& params, const ProjectionField& P
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-real calculateAngle(const SimParam& param, const ProjectionField& P, const Vec2& velocity){
+real calculateAngle(const SimParam& param, const ProjectionField& P, const Vec2& velocity, int color){
 	const real φ = angle(velocity);
 
 	// -β0    * ∫(  sin(ϕ) P(ϕ)       dϕ)
@@ -116,20 +116,20 @@ real calculateAngle(const SimParam& param, const ProjectionField& P, const Vec2&
 }
 
 
-real calculateAngle(const SimulationParameters& params, const ProjectionField& P, const Vec2& velocity){
+real calculateAngle(const SimulationParameters& params, const ProjectionField& P, const Vec2& velocity, int color){
 	const real φ = angle(velocity);
 
 	// ∫_{-π}^{+π}( -β0 sin(ϕ) P(ϕ) dϕ)
 	real intA = 0;
 	for (const Interval& span : P){
-		const SimParam& param = getParam(params, span.color);
+		const SimParam& param = getParam(params, color, span.color);
 		intA -= sinIntegral(span.start - φ, span.end - φ) * param.β0;
 	}
 	
 	// ∫_{-π}^{+π}( +β0 β1 sin(ϕ) (∂ϕP(ϕ))² dϕ)
 	real intB = 0;
 	for (const Interval& span : P){
-		const SimParam& param = getParam(params, span.color);
+		const SimParam& param = getParam(params, color, span.color);
 		intB += (sin(span.start - φ) + sin(span.end - φ)) * param.β0 * param.β1;
 	}
 	
@@ -143,7 +143,7 @@ real calculateAngle(const SimulationParameters& params, const ProjectionField& P
 template<typename PARAMS>
 Vec2 calculateVelocity(const PARAMS& params, const ProjectionField& field, const Vec2& velocity, int color){
 	const real v = calculateSpeed(params, field, velocity, color);
-	const real a = calculateAngle(params, field, velocity);
+	const real a = calculateAngle(params, field, velocity, color);
 	const real φ = angle(velocity) + a;
 	const real speed = length(velocity) + v;
 	return Vec2(cos(φ), sin(φ)) * speed;

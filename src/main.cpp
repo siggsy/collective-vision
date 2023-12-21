@@ -163,13 +163,13 @@ unique_ptr<ostream> openOutput(const string& path){
 
 
 bool parseCLIParams(const vector<string>& args, SimulationParameters& out_params){
-	int color;
+	ParamKey key;
 	SimParam val;
 	bool status = true;
 	
 	for (const string& s : args){
-		if (parseParameter(s, &color, &val)){
-			out_params.emplace(color, val);
+		if (parseParameter(s, &key, &val)){
+			out_params.emplace(key, val);
 		} else {
 			error("Failed to parse simulation parameter '" ANSI_YELLOW "%s" ANSI_RESET "'.\n", s.c_str());
 			status = false;
@@ -181,6 +181,17 @@ bool parseCLIParams(const vector<string>& args, SimulationParameters& out_params
 
 
 // --------------------------------- [ Main Function ] -------------------------------------- //
+
+/**
+ * @throws `std::out_of_range` When `params` does not contain an entry for a color of an interval or object.
+ */
+inline const SimParam& getParam(const SimulationParameters& params, int self, int other){
+	auto p = params.find({self, other});
+	if (p != params.end())
+		return p->second;
+	else
+		throw out_of_range("Missing simulation parameters for color mapping '(" + to_string(self) + ":" + to_string(other) + ")'.");
+}
 
 
 int main(int argc, char const* const* argv){
