@@ -25,9 +25,8 @@ namespace CLI {
 	string programName = DEFAULT_APP_NAME;
 	string output;
 	vector<string> colors;
-	int prey_count;
-	int predator_count;
-	int step_count;
+	vector<string> boids;
+	int stepCount;
 	bool help = false;
 }
 
@@ -39,22 +38,20 @@ enum OptionID : int {
 	NONE = INT32_MIN,
 	HELP,
 	OUTPUT,
-	PREY,
-	PREDATOR,
+	BOID,
 	STEPS,
 	COLOR,
 } selected_opt;
 
 
-const char* const short_options = "h" "o:" "c:" "a:" "b:" "n:";
+const char* const short_options = "h" "o:" "c:" "b:" "n:";
 
 
 const struct option long_options[] = {
 	{"help",     no_argument,       (int*)&selected_opt, OptionID::HELP     },
 	{"output",   required_argument, (int*)&selected_opt, OptionID::OUTPUT   },
 	{"color",    required_argument, (int*)&selected_opt, OptionID::COLOR    },
-	{"prey",     required_argument, (int*)&selected_opt, OptionID::PREY     },
-	{"predator", required_argument, (int*)&selected_opt, OptionID::PREDATOR },
+	{"boid",     required_argument, (int*)&selected_opt, OptionID::BOID     },
 	{"steps",    required_argument, (int*)&selected_opt, OptionID::STEPS    },
 	{0, 0, 0, 0}
 };
@@ -71,10 +68,8 @@ OptionID shortOptionToLong(char c){
 			return OptionID::OUTPUT;
 		case 'c':
 			return OptionID::COLOR;
-		case 'a':
-			return OptionID::PREY;
 		case 'b':
-			return OptionID::PREDATOR;
+			return OptionID::BOID;
 		case 'n':
 			return OptionID::STEPS;
 		default:
@@ -147,21 +142,13 @@ void CLI::parse(int argc, char const* const* argv){
 				output = optarg;
 				break;
 			
-			case OptionID::PREY:
-				prey_count = atoi(optarg);
-				if (prey_count < 0)
-					throw runtime_error("Prey count must be non-negative.");
-				break;
-			
-			case OptionID::PREDATOR:
-				predator_count = atoi(optarg);
-				if (predator_count < 0)
-					throw runtime_error("Predator count must be non-negative.");
+			case OptionID::BOID:
+				boids.emplace_back(optarg);
 				break;
 
 			case OptionID::STEPS:
-				step_count = atoi(optarg);
-				if (step_count < 0)
+				stepCount = atoi(optarg);
+				if (stepCount < 0)
 					throw runtime_error("Step count must be non-negative.");
 				break;
 			
@@ -191,9 +178,8 @@ void CLI::clear(){
 	programName = DEFAULT_APP_NAME;
 	output.clear();
 	colors.clear();
-	prey_count = 0;
-	predator_count = 0;
-	step_count = 0;
+	boids.clear();
+	stepCount = 0;
 	help = false;
 }
 

@@ -9,9 +9,8 @@ namespace CLI {
 	extern std::string programName;
 	extern std::string output;
 	extern std::vector<std::string> colors;
-	extern int prey_count;
-	extern int predator_count;
-	extern int step_count;
+	extern std::vector<std::string> boids;
+	extern int stepCount;
 	extern bool help;
 }
 

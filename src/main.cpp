@@ -56,17 +56,15 @@ void printHelp(){
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-void initRandom(vector<unique_ptr<Boid>>& boids, const real size, const int color, const int n, const Vec2& start, const Vec2& end){
-
+void initRandom(vector<unique_ptr<Boid>>& boids, BoidParam& b, const Vec2& start, const Vec2& end){
 	mt19937 gen(numbers::pi);
 	uniform_real_distribution<> disX(start.x, end.x);
 	uniform_real_distribution<> disY(start.y, end.y);
-	for (int i = 0; i < n; i++){
+	for (int i = 0; i < b.count; i++){
 		real x = disX(gen);
 		real y = disY(gen);
-		boids.emplace_back(new Boid(x, y, size, color));
+		boids.emplace_back(new Boid(x, y, b.size, b.color, b.prefSpeed));
 	}
-	
 }
 
 void writeState(ostream& out, const vector<unique_ptr<Boid>>& state){
@@ -81,16 +79,19 @@ void writeState(ostream& out, const vector<unique_ptr<Boid>>& state){
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-void runSim(const int step_count, const int prey_count, const int predator_count, SimulationParameters& params, ostream& out){
+void runSim(const int step_count, BoidParameters& boidParams, SimulationParameters& params, ostream& out){
 	vector<unique_ptr<Boid>> boids;
-	initRandom(boids, 0.5, 0, prey_count, {0, 0}, {5, 5});
-	initRandom(boids, 0.5, 1, predator_count, {10, 0}, {15, 5});
-	const int N = step_count;
-
-	// Output metadata
-	out << prey_count << ':' << predator_count << ';' << step_count << '\n';
+	for (int i = 0; i < boidParams.size(); i++){
+		BoidParam b = boidParams[i];
+		initRandom(boids, b, {0, 0}, {5, 5});
+		out << b.count;
+		if (i < boidParams.size() - 1)
+			out << ':';
+	}
+	out << ';' << step_count << '\n';
 
 	// Output simulation states
+	const int N = step_count;
 	if (params.empty()){
 		for (int i = 0; i < N; i++) {
 			writeState(out, boids);
@@ -165,7 +166,7 @@ unique_ptr<ostream> openOutput(const string& path){
 }
 
 
-bool parseCLIParams(const vector<string>& args, SimulationParameters& out_params){
+bool parseSIMParams(const vector<string>& args, SimulationParameters& out_params){
 	ParamKey key;
 	SimParam val;
 	bool status = true;
@@ -175,6 +176,23 @@ bool parseCLIParams(const vector<string>& args, SimulationParameters& out_params
 			out_params.emplace(key, val);
 		} else {
 			error("Failed to parse simulation parameter '" ANSI_YELLOW "%s" ANSI_RESET "'.\n", s.c_str());
+			status = false;
+		}
+	}
+	
+	return status;
+}
+
+
+bool parseBOIDParams(const vector<string>& args, BoidParameters& out_params){
+	BoidParam boid;
+	bool status = true;
+	
+	for (const string& s : args){
+		if (parseParameter(s, &boid)){
+			out_params.emplace_back(boid);
+		} else {
+			error("Failed to parse boid parameter '" ANSI_YELLOW "%s" ANSI_RESET "'.\n", s.c_str());
 			status = false;
 		}
 	}
@@ -212,13 +230,18 @@ int main(int argc, char const* const* argv){
 	
 	unique_ptr<ostream> out = openOutput(CLI::output);
 	
-	SimulationParameters params = {};
-	if (!parseCLIParams(CLI::colors, params)){
+	SimulationParameters simParams = {};
+	if (!parseSIMParams(CLI::colors, simParams)){
+		return 1;
+	}
+
+	BoidParameters boidParams = {};
+	if (!parseBOIDParams(CLI::colors, boidParams)){
 		return 1;
 	}
 	
 	try {
-		runSim(CLI::step_count, CLI::prey_count, CLI::predator_count, params, *out);
+		runSim(CLI::stepCount, boidParams, simParams, *out);
 	} catch (const exception& e){
 		error("%s\n", e.what());
 		return 1;

@@ -39,8 +39,7 @@ inline const SimParam& getParam(const SimulationParameters& params, int self, in
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-real calculateSpeed(const SimParam& param, const ProjectionField& P, const Vec2& velocity, int color){
-	const real prefSpeed = Boid::prefSpeed;
+real calculateSpeed(const SimParam& param, const ProjectionField& P, const Vec2& velocity, const real prefSpeed, int color){
 	const real speed = length(velocity);
 	const real φ = angle(velocity);
 	
@@ -67,8 +66,7 @@ real calculateSpeed(const SimParam& param, const ProjectionField& P, const Vec2&
 /**
  * @throws `std::out_of_range` When `params` does not contain an entry for a color of an interval or object.
  */
-real calculateSpeed(const SimulationParameters& params, const ProjectionField& P, const Vec2& velocity, int color){
-	const real prefSpeed = Boid::prefSpeed;
+real calculateSpeed(const SimulationParameters& params, const ProjectionField& P, const Vec2& velocity, const real prefSpeed, int color){
 	const real speed = length(velocity);
 	const real φ = angle(velocity);
 	
@@ -141,8 +139,8 @@ real calculateAngle(const SimulationParameters& params, const ProjectionField& P
 
 
 template<typename PARAMS>
-Vec2 calculateVelocity(const PARAMS& params, const ProjectionField& field, const Vec2& velocity, int color){
-	const real v = calculateSpeed(params, field, velocity, color);
+Vec2 calculateVelocity(const PARAMS& params, const ProjectionField& field, const Vec2& velocity, const real prefSpeed, int color){
+	const real v = calculateSpeed(params, field, velocity, prefSpeed, color);
 	const real a = calculateAngle(params, field, velocity, color);
 	const real φ = angle(velocity) + a;
 	const real speed = length(velocity) + v;
@@ -175,7 +173,7 @@ unique_ptr<Boid> simulateOne(const PARAMS& params, const vector<unique_ptr<Boid>
 	obj->size = prevObj.size;
 	obj->color = prevObj.color;
 	obj->view = calculateProjectionField(prevState, prevObj);
-	obj->velocity = calculateVelocity(params, obj->view, prevObj.velocity, obj->color);
+	obj->velocity = calculateVelocity(params, obj->view, prevObj.velocity, prevObj.prefSpeed, obj->color);
 	obj->pos = prevObj.pos + prevObj.velocity;
 	
 	return obj;
