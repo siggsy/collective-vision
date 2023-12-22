@@ -83,9 +83,9 @@ void writeState(ostream& out, const vector<unique_ptr<Boid>>& state){
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-void runSim(SimulationParameters& params, ostream& out){
+void runSim(const int step_count, const int prey_count, const int predator_cont, SimulationParameters& params, ostream& out){
 	vector<unique_ptr<Boid>> boids = initRandom(50, {0, 0}, {5, 5});
-	const int N = 2000;
+	const int N = step_count;
 	
 	if (params.empty()){
 		for (int i = 0; i < N; i++) {
@@ -215,7 +215,7 @@ int main(int argc, char const* const* argv){
 	}
 	
 	try {
-		runSim(params, *out);
+		runSim(CLI::step_count, CLI::prey_count, CLI::predator_count, params, *out);
 	} catch (const exception& e){
 		error("%s\n", e.what());
 		return 1;

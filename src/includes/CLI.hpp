@@ -11,6 +11,7 @@ namespace CLI {
 	extern std::vector<std::string> colors;
 	extern int prey_count;
 	extern int predator_count;
+	extern int step_count;
 	extern bool help;
 }
 

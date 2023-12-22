@@ -27,6 +27,7 @@ namespace CLI {
 	vector<string> colors;
 	int prey_count;
 	int predator_count;
+	int step_count;
 	bool help = false;
 }
 
@@ -40,11 +41,12 @@ enum OptionID : int {
 	OUTPUT,
 	PREY,
 	PREDATOR,
-	COLOR
+	STEPS,
+	COLOR,
 } selected_opt;
 
 
-const char* const short_options = "h" "o:" "c:" "a:" "b:";
+const char* const short_options = "h" "o:" "c:" "a:" "b:" "n:";
 
 
 const struct option long_options[] = {
@@ -53,6 +55,7 @@ const struct option long_options[] = {
 	{"color",    required_argument, (int*)&selected_opt, OptionID::COLOR    },
 	{"prey",     required_argument, (int*)&selected_opt, OptionID::PREY     },
 	{"predator", required_argument, (int*)&selected_opt, OptionID::PREDATOR },
+	{"steps",    required_argument, (int*)&selected_opt, OptionID::STEPS    },
 	{0, 0, 0, 0}
 };
 
@@ -72,6 +75,8 @@ OptionID shortOptionToLong(char c){
 			return OptionID::PREY;
 		case 'b':
 			return OptionID::PREDATOR;
+		case 'n':
+			return OptionID::STEPS;
 		default:
 			return OptionID::NONE;
 	}
@@ -182,6 +187,7 @@ void CLI::clear(){
 	colors.clear();
 	prey_count = 0;
 	predator_count = 0;
+	step_count = 0;
 	help = false;
 }
 
