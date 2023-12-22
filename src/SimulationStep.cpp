@@ -219,7 +219,8 @@ static SimulationState _simulationStep(const PARAMS& params, const SimulationSta
 	for (int i = 0 ; i < t ; i++){
 		const int start = i * b;
 		const int end = min(start + b, n);
-		f[i] = async(simulateRange<PARAMS>, ref(params), ref(prevState), start, end);
+		const launch policy = ((i == 0) ? launch::deferred : launch::async);
+		f[i] = async(policy, simulateRange<PARAMS>, ref(params), ref(prevState), start, end);
 	}
 	
 	
