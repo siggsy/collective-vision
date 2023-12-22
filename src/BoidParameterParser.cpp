@@ -10,10 +10,11 @@ using namespace std;
 const regex reg = regex(
 	"^\\s*"
 	"\\(\\s*"
-		"(\\d+)"              "\\s*:\\s*"
-		"(\\d+)"              "\\s*:\\s*"
+		"(\\d+)"              "\\s*,\\s*"
+		"(\\d+)"              "\\s*,\\s*"
 		"(\\d+(?:\\.\\d+)?)"  "\\s*,\\s*"
 		"(\\d+(?:\\.\\d+)?)"  "\\s*,\\s*"
+		"(\\d+(?:\\.\\d+)?)"  "\\s*\\s*"
 	"\\)"
 	"\\s*$"
 );
@@ -31,6 +32,7 @@ bool parseParameter(const string& s, BoidParam* outParam){
 			outParam->color = stoi(m[2]);
 			outParam->size = strtod(m[3].first.base(), nullptr);
 			outParam->prefSpeed = strtod(m[4].first.base(), nullptr);
+			outParam->maxSpeed = strtod(m[5].first.base(), nullptr);
 		}
 		
 		return true;

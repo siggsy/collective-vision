@@ -139,11 +139,11 @@ real calculateAngle(const SimulationParameters& params, const ProjectionField& P
 
 
 template<typename PARAMS>
-Vec2 calculateVelocity(const PARAMS& params, const ProjectionField& field, const Vec2& velocity, const real prefSpeed, int color){
+Vec2 calculateVelocity(const PARAMS& params, const ProjectionField& field, const Vec2& velocity, const real prefSpeed, const real maxSpeed, int color){
 	const real v = calculateSpeed(params, field, velocity, prefSpeed, color);
 	const real a = calculateAngle(params, field, velocity, color);
 	const real φ = angle(velocity) + a;
-	const real speed = length(velocity) + v;
+	const real speed = max(length(velocity) + v, maxSpeed);
 	return Vec2(cos(φ), sin(φ)) * speed;
 }
 
@@ -173,7 +173,7 @@ unique_ptr<Boid> simulateOne(const PARAMS& params, const vector<unique_ptr<Boid>
 	obj->size = prevObj.size;
 	obj->color = prevObj.color;
 	obj->view = calculateProjectionField(prevState, prevObj);
-	obj->velocity = calculateVelocity(params, obj->view, prevObj.velocity, prevObj.prefSpeed, obj->color);
+	obj->velocity = calculateVelocity(params, obj->view, prevObj.velocity, prevObj.prefSpeed, prevObj.maxSpeed, obj->color);
 	obj->pos = prevObj.pos + prevObj.velocity;
 	
 	return obj;

@@ -9,6 +9,7 @@ class Boid {
 public:
 	real size = 0.5;
 	real prefSpeed = 0.5;
+	real maxSpeed = 0.5;
 	Vec2 pos = {0,0};
 	Vec2 velocity = {0,0};
 	int color = 0;
@@ -21,6 +22,7 @@ public:
 	Boid(real x, real y, real size) : size{size}, pos{x,y} {}
 	Boid(real x, real y, real size, int color) : size{size}, pos{x,y}, color{color} {}
 	Boid(real x, real y, real size, int color, real prefSpeed) : size{size}, pos{x,y}, color{color}, prefSpeed{prefSpeed} {}
+	Boid(real x, real y, real size, int color, real prefSpeed, real maxSpeed) : size{size}, pos{x,y}, color{color}, prefSpeed{prefSpeed}, maxSpeed{maxSpeed} {}
 	
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 public:
@@ -38,6 +40,7 @@ struct BoidParam {
 	int color;
 	real size;
 	real prefSpeed;
+	real maxSpeed;
 };
 
 typedef std::vector<BoidParam> BoidParameters;

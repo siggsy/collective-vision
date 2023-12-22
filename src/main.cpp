@@ -63,16 +63,20 @@ void initRandom(vector<unique_ptr<Boid>>& boids, BoidParam& b, const Vec2& start
 	for (int i = 0; i < b.count; i++){
 		real x = disX(gen);
 		real y = disY(gen);
-		boids.emplace_back(new Boid(x, y, b.size, b.color, b.prefSpeed));
+		boids.emplace_back(new Boid(x, y, b.size, b.color, b.prefSpeed, b.maxSpeed));
 	}
 }
 
 void writeState(ostream& out, const vector<unique_ptr<Boid>>& state){
-	for (int i = 0; i < state.size(); i++){
+	if (state.size() == 0) return;
+
+	const Boid& b = *state[0];
+	out << b.pos.x << " " << b.pos.y;
+	for (int i = 1; i < state.size(); i++){
 		const Boid& b = *state[i];
-		out.write((char*)(&b.pos.x), sizeof(real));
-		out.write((char*)(&b.pos.y), sizeof(real));
+		out << " " << b.pos.x << " " << b.pos.y;
 	}
+	out << '\n';
 }
 
 
@@ -81,14 +85,20 @@ void writeState(ostream& out, const vector<unique_ptr<Boid>>& state){
 
 void runSim(const int step_count, BoidParameters& boidParams, SimulationParameters& params, ostream& out){
 	vector<unique_ptr<Boid>> boids;
+
+	if (boidParams.size() == 0){
+		error("Missing boid types!\n");
+		return;
+	}
+
 	for (int i = 0; i < boidParams.size(); i++){
-		BoidParam b = boidParams[i];
-		initRandom(boids, b, {0, 0}, {5, 5});
+		BoidParam& b = boidParams[i];
+		initRandom(boids, b, {i*100.0, 0}, {i*100.0 + 5.0, 5});
 		out << b.count;
 		if (i < boidParams.size() - 1)
-			out << ':';
+			out << ' ';
 	}
-	out << ';' << step_count << '\n';
+	out << '\n';
 
 	// Output simulation states
 	const int N = step_count;
@@ -236,7 +246,7 @@ int main(int argc, char const* const* argv){
 	}
 
 	BoidParameters boidParams = {};
-	if (!parseBOIDParams(CLI::colors, boidParams)){
+	if (!parseBOIDParams(CLI::boids, boidParams)){
 		return 1;
 	}
 	
