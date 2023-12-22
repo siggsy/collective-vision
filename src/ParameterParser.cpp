@@ -24,7 +24,7 @@ static const regex sim_reg = regex(
 );
 
 
-// (<count>, <color>, <size>, <prefSpeed>)
+// (<count>, <color>, <size>, <prefSpeed>, <maxSpeed>)
 static const regex boid_reg = regex(
 	"^\\s*"
 	"\\(\\s*"
