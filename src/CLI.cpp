@@ -158,6 +158,12 @@ void CLI::parse(int argc, char const* const* argv){
 				if (predator_count < 0)
 					throw runtime_error("Predator count must be non-negative.");
 				break;
+
+			case OptionID::STEPS:
+				step_count = atoi(optarg);
+				if (step_count < 0)
+					throw runtime_error("Step count must be non-negative.");
+				break;
 			
 			case OptionID::COLOR:
 				colors.emplace_back(optarg);
