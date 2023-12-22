@@ -56,8 +56,7 @@ void printHelp(){
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-vector<unique_ptr<Boid>> initRandom(const int n, const Vec2& start, const Vec2& end){
-	vector<unique_ptr<Boid>> f0 = {};
+void initRandom(vector<unique_ptr<Boid>>& boids, const real size, const int color, const int n, const Vec2& start, const Vec2& end){
 
 	mt19937 gen(numbers::pi);
 	uniform_real_distribution<> disX(start.x, end.x);
@@ -65,10 +64,9 @@ vector<unique_ptr<Boid>> initRandom(const int n, const Vec2& start, const Vec2& 
 	for (int i = 0; i < n; i++){
 		real x = disX(gen);
 		real y = disY(gen);
-		f0.emplace_back(new Boid(x, y));
+		boids.emplace_back(new Boid(x, y, size, color));
 	}
 	
-	return f0;
 }
 
 void writeState(ostream& out, const vector<unique_ptr<Boid>>& state){
@@ -83,10 +81,16 @@ void writeState(ostream& out, const vector<unique_ptr<Boid>>& state){
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-void runSim(const int step_count, const int prey_count, const int predator_cont, SimulationParameters& params, ostream& out){
-	vector<unique_ptr<Boid>> boids = initRandom(50, {0, 0}, {5, 5});
+void runSim(const int step_count, const int prey_count, const int predator_count, SimulationParameters& params, ostream& out){
+	vector<unique_ptr<Boid>> boids;
+	initRandom(boids, 0.5, 0, prey_count, {0, 0}, {5, 5});
+	initRandom(boids, 0.5, 1, predator_count, {10, 0}, {15, 5});
 	const int N = step_count;
-	
+
+	// Output metadata
+	out << prey_count << ':' << predator_count << ';' << step_count << '\n';
+
+	// Output simulation states
 	if (params.empty()){
 		for (int i = 0; i < N; i++) {
 			writeState(out, boids);
@@ -98,7 +102,6 @@ void runSim(const int step_count, const int prey_count, const int predator_cont,
 			boids = simulationStep(params, boids);
 		}
 	}
-	
 }
 
 
