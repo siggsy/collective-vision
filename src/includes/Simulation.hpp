@@ -60,7 +60,7 @@ SimulationState simulationStep(const SimulationParameters& params, const Simulat
  *        Example: `0(0.5, 0.08, 0.1, 0.08, 0.95)`
  * @return SimParam if parsing successful else null.
  */
-bool parseParameter(const std::string&, std::tuple<int,int>* outColor, SimParam* outParam);
+bool parseParameter(const std::string&, std::tuple<int,int>& outColor, SimParam& outParam);
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //

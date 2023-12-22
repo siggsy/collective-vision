@@ -182,7 +182,7 @@ bool parseSIMParams(const vector<string>& args, SimulationParameters& out_params
 	bool status = true;
 	
 	for (const string& s : args){
-		if (parseParameter(s, &key, &val)){
+		if (parseParameter(s, key, val)){
 			out_params.emplace(key, val);
 		} else {
 			error("Failed to parse simulation parameter '" ANSI_YELLOW "%s" ANSI_RESET "'.\n", s.c_str());
@@ -199,7 +199,7 @@ bool parseBOIDParams(const vector<string>& args, BoidParameters& out_params){
 	bool status = true;
 	
 	for (const string& s : args){
-		if (parseParameter(s, &boid)){
+		if (parseParameter(s, boid)){
 			out_params.emplace_back(boid);
 		} else {
 			error("Failed to parse boid parameter '" ANSI_YELLOW "%s" ANSI_RESET "'.\n", s.c_str());

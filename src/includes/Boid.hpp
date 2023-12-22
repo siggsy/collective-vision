@@ -54,7 +54,7 @@ typedef std::vector<BoidParam> BoidParameters;
  *        Example: `(0.5, 0.08, 0.1, 0.08, 0.95)`
  * @return SimParam if parsing successful else null.
  */
-bool parseParameter(const std::string&, BoidParam* outParam);
+bool parseParameter(const std::string&, BoidParam& outParam);
 
 
 // ------------------------------------------------------------------------------------------ //
