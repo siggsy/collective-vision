@@ -213,17 +213,6 @@ bool parseBOIDParams(const vector<string>& args, BoidParameters& out_params){
 
 // --------------------------------- [ Main Function ] -------------------------------------- //
 
-/**
- * @throws `std::out_of_range` When `params` does not contain an entry for a color of an interval or object.
- */
-inline const SimParam& getParam(const SimulationParameters& params, int self, int other){
-	auto p = params.find({self, other});
-	if (p != params.end())
-		return p->second;
-	else
-		throw out_of_range("Missing simulation parameters for color mapping '(" + to_string(self) + ":" + to_string(other) + ")'.");
-}
-
 
 int main(int argc, char const* const* argv){
 	try {
