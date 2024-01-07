@@ -6,12 +6,19 @@
 
 \usepackage{graphicx}
 \usepackage{subfig}
+% \usepackage[dvipsnames]{xcolor}
+% \usepackage[usenames,dvipsnames]{color}
 
 \usepackage{hyperref}
-\hypersetup{colorlinks=true,linkcolor=blue, linktocpage}
+\hypersetup{colorlinks=true, linkcolor=blue, linktocpage}
 
 \usepackage{import}
 \usepackage[subpreambles=true]{standalone}
+
+
+\definecolor{amber}{rgb}{1.0, 0.49, 0.0}
+\definecolor{cadmiumorange}{rgb}{0.93, 0.53, 0.18}
+\definecolor{carrotorange}{rgb}{0.93, 0.57, 0.13}
 
 % Fancy new commands
 \newcommand{\set}[1]{\ensuremath{\mathbf{#1}}}
@@ -74,7 +81,7 @@ In this seminar we explore a mathematical framework for perception-based interac
 \begin{abstract}
 When modeling collective behaviour it is commonly assumed that agents inherently know other agents position, velocity and direction.
 There exists a motivation to get rid of these assumptions and model the behaviour based on how internal and external information is acquired and processed.
-Vision is one of the more important sensory systems that provide crucial external information, which turns out to be sufficient for modeling interactions between agents in a swarm.
+Vision is one of the most important sensory systems that provide crucial external information, which turns out to be sufficient for modeling interactions between agents in a swarm.
 In this seminar we explore a mathematical framework for perception-based interactions proposed by Renaud Bastien and Pawel Romanczuk.
 \end{abstract}
 
@@ -100,11 +107,12 @@ However, this assumption of how the information is processed by agents limits ou
 A better alternative would be to model the behaviour around internal and external information that agents are capable of acquiring.
 
 In this seminar we use a mathematical framework proposed by Renaud Bastien and Pawel Romanczuk \cite{main-paper}, to create a simulation of flock of birds that solely relies on vision.
+We improve on the original paper by replacing ray casting with direct projection, which increases accuracy and computational speed of each simulation step.
+Finally, we also introduce colors to the visual field projections, which in turn allow us to model more versatile collective behaviours with different agent types (e.g. predator, prey, disruptor ...).
 
 
-
-
-
+% <---- look at it, litle fella right there
+% huh?
 
 
 
@@ -132,7 +140,13 @@ In this seminar we use a mathematical framework proposed by Renaud Bastien and P
 
 The simulation is done in 2-dimensional space where agents are represented as simple disk objects with full $360^\circ$ view.
 On each simulation step, their velocity is modified based on a projection of their surrounding visual field.
+
+The parameters that encode the severity of the response to the environment can also be upgraded with the use of \textit{colors}, where parameters vary between each color.
+In other words, a boid can have different responses to different kinds of objects in their surroundings.
+
 This simulates a primitive form of vision.
+
+
 
 
 
@@ -140,9 +154,9 @@ This simulates a primitive form of vision.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\linewidth]{projection.pdf}
+    \includegraphics[width=0.7\linewidth]{figures/projection-colored.pdf}
     \caption{
-       Projection field graph of a single object.
+       Projection field graph of an object. The projection interval of the blue object overlaps (overrides) part of the interval of the red object.
     }
     \label{fig:example-projection}
 \end{figure}
@@ -154,6 +168,18 @@ Function $P(\varphi)$ represents visual obstructions of the agent, where $\varph
 An example of a visual field projection can be seen on figure \ref{fig:example-projection}.
 
 \fussy
+
+
+\subsection{Colored visual projection field}
+
+After achieving the basic monochrome visual projection field, we can extend it to also hold information about the color of the projected object as shown on figure \ref{fig:example-projection}.
+This will come in handy when implementing different behavioral responses to different surrounding objects.
+This allows us to implement \textit{disruptor} birds to make the simulation a bit more interesting.
+
+We must be careful to ensure that projection intervals of closer objects take precedent over more distant objects.
+In other words, we must sort objects based on distance just like in regular computer graphics.
+Just like in computer graphics, we don't actually sort the objects, we instead keep a z-index (or depth index) of each projection interval and then override intervals with larger z-indexes.
+
 
 
 
@@ -211,7 +237,8 @@ Consequently the heading vector is now removed, since it is encoded as the headi
 As we will see further in the seminar, parameters $\alpha_1$ and $\beta_1$ influence the equilibrium distances.
 $\alpha_1$ influences the front-back distance equilibrium $\frac{r}{\alpha_1}$, while $\beta_1$ influences the left-right distance equilibrium $\frac{r}{\beta_1}$, where $r$ stands for agent radius.
 
-
+For a more realistic simulation we also added parameter $v_{\textbf{max}}$ that constraints boid's speed.
+This was needed when adding \textit{disruptor} boids, as their repulsive/attractive behaviour resulted in unrealistic speeds (compared to $v_{\text{pref}}$)
 
 
 
@@ -223,9 +250,13 @@ Because the projection function $P$ contains contiguous regions of values $0$ or
 A visual representation of multiplying a trigonometric function with $P$ (in this case $cos$) can be seen on figure \ref{fig:integral}.
 This trick trivialises the integral calculation.
 
+With colored projection fields, we must also take into consideration that each interval has a different set of constants ($\alpha_0$, $\alpha_1$, $\beta_0$, ...).
+This doesn't change much as all we must do is retrieve the appropriate constants of the \textit{colored} interval we are currently handling.
+
+
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\linewidth]{integral.png}
+    \includegraphics[width=0.6\linewidth]{integral.png}
     \caption{
       Multiplying a function (in this case $cos$) with some projection function $P$.
     }
@@ -240,6 +271,10 @@ This trick trivialises the integral calculation.
 The simulation is implemented in C++.
 
 In the source paper \cite{main-paper}, the author calculates the projection function $P$ using ray casting.
+Ray casting is a method of sampling the environment for obstructions by calculating intersections of \underline{all} objects with a line (a ray).
+Casting more rays results in a more accurate sampling of the environment.
+This is also highly inefficient, as one would have to cast an enormous amount of rays to gain a very precise insight into their environment.
+
 We have improved on this by projecting the objects directly by calculating the appropriate angles of vision for each object as show in figure \ref{fig:example-projection}.
 For each object we constructed an array of intervals where $P$ would have a value of $1$.
 By carefully merging these intervals we kept the array \textit{clean} as none of the intervals would intersect.
@@ -278,8 +313,8 @@ In figure \ref{fig:simulation} we can see 3 different collective behaviours usin
 \begin{figure}[H]
     \centering
     \begin{tabular}{cc}
-        \includegraphics[width=0.47\textwidth]{line.png} &
-        \includegraphics[width=0.47\textwidth]{crystal.png} \\
+        \includegraphics[width=0.466\textwidth]{line.png} &
+        \includegraphics[width=0.466\textwidth]{crystal.png} \\
         (a) Polarized line ($\alpha_0 = 0.5$, $\beta_0 = 0.01$) & (b) Crystal ($\alpha_0 = 0.1$, $\beta_0 = 10$) \\
         \multicolumn{2}{c}{
             \includegraphics[width=0.5\textwidth]{swarm.png}
@@ -295,36 +330,35 @@ In contrast, in simulation (b) agents shake in-place and barely make any distanc
 Since the figures represent the last frames of the animation, this can be observed by checking their final coordinates.
 In the final simulation (c) agents are moving around freely while maintaining a swarm.
 
+When observing these behaviours, we can intuitively understand parameter $\alpha_0$ as boid's drive to maintain equilibrium distance by changing its speed, and parameter $\beta_0$ as boid's drive to maintain equilibrium distance by changing its heading direction.
+
+\medskip
+
+Next we tried a simulation with one \textit{disruptor boid (\textcolor{blue}{\textbf{blue}})}.
+The parameters for \textcolor{orange}{\textbf{orange}} boids were similar to the ones for a polarized line ($\alpha_0 = 0.5$, $\beta_0 = 0.08$).
+The new blue boid has a strong attraction to the orange boids and has higher maximum velocity.
+On the other hand, the orange boids strongly avoid the blue boid.
+
+A few frames of the simulation can be seen on figure \ref{fig:simulation-multicolored}, where each frame also shows a graph of the projection field of the outlined orange boid.
+In frame (a), the orange boids have not yet encountered the blue boid and continue towards the right.
+In frame (b) they finally meet and turn around to try to fly away.
+In frame (c) the blue boid finally catches up to the other boids and disperses them.
+Frame (d) shows the general chaos of the whole flock as the blue boid franticly tries to catch an orange boid.
 
 
-
-% Uporabljamo višinske karte velikosti 512$\times$512 točk. Začetni teren se, predvsem zato ker je opravilo prepuščeno centralni procesni enoti, v povprečju zgradi v 3\,s. Ker se ta korak izvede samo enkrat v celotnem procesu to ni moteče. Nadaljna simulacija naravnih procesov se izvaja hitro; s frekvenco 94\,Hz (iteracij na sekundo), ko se izvaja zgolj proces hidravlične erozije, 108\,Hz, ko se izvaja zgolj proces termične erozije, in 85\,Hz, ko se izvajata oba procesa erozije sočasno. Simulacije rasti koralnega grebena ne izvajamo sočasno z erozijo, ampak ločeno, ta se izvaja s frekvenco 108\,Hz. Najhitrejša je vizualizacija, ki takrat, ko se ne izvaja nobena simulacija, dosega prikaz z 124\,fps (slik na sekundo). V celoti generiranje otoka želenega videza traja od 10 do 15 sekund. Vse vrednosti veljajo za prenosni računalnik s procesorjem Intel Core i7 4700-HQ, 8\,GB delovnega pomnilnika in grafično kartico nVidia GTX 760M, pri čemer smo v pogonu Unity 5 imeli nastavljen prikaz z najvišjo stopnjo podrobnosti.
-
-% Predstavljen postopek torej uspešno generira začetni teren, na katerem simulira hidravlično in termično erozijo ter nato še rast koralnega grebena. Končni teren z nanesenimi teksturami in izrisom morske gladine ima prepričljiv videz tropskega otoka. S spreminjanjem parametrov lahko dobimo veliko različnih oblik otoka, kot prikazujeta primera na sliki \ref{fig:final_island_1}.
-
-% Z videzom tropskega otoka smo zadovoljni, hidravlična in termična erozija skupaj oblikujeta razgiban teren brez večjih vidnih napak. Dodan korak difuzije sedimenta se dobro obnese, vendar ni fizično natančen. Transport sedimenta in logika nalaganja sedimenta potrebujeta še nekaj izboljšav. Težava modela hidravlične erozije je v tem, da je težko uravnovesiti vse konstante v simulaciji. Simulacija hitro postane nestabilna, kar povzroča večje napake na terenu. Maške \cite{maske_2013} je v svojem diplomskem delu dosegel boljši transport in nalaganje sedimenta. Hitrosti izvajanja pa zaradi uporabe različne strojne opreme ne moremo primerjati z njegovo.
-
-% Simulacija rasti koralnega grebena daje prepričljive rezultate in se izvaja hitro. Videz grebena bi lahko bil bolj razgiban, saj se trenutno ob obali otoka ustvari popoln in neprekinjen greben. Naravni grebeni so mnogokrat prekinjeni in različno oddaljeni od obale. Tako kot pri hidravlični eroziji smo tudi v primeru simulacije rasti koralnega grebena imeli težave z uravnovešanjem konstant, saj ima že zelo majhna sprememba velik vpliv na končni rezultat.
-
-% Dinamično nanašanje tekstur deluje hitro in daje prepričljiv videz. Vzorčne teksture lahko zamenjamo in tako na preprost način spremenimo videz otoka. Videz otoka lahko spreminjamo tudi s spreminjanjem parametrov v senčilniku, kot sta na primer gostota ponavljanja posamezne vzorčne teksture in naklon terena, pri katerem namesto teksture trave nanesemo teksturo skale. 
-
-% Gladina morja veliko pripomore k prepričljivosti vizualizacije otoka. Senčilnik se dobro obnese, saj nam daje tudi vizualno informacijo o globini vode, kar je še posebno koristno v okolici koralnega grebena. Prikaz sicer ni fizikalno natančen, saj zanemari kot pogleda. Globino vedno izrisuje, kot da je pogled od zgoraj navzdol. V praksi pa to ne povzroča težav, saj teren večino časa opazujemo iz zraka.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\begin{figure}[H]
+    \centering
+    \begin{tabular}{cc}
+        \includegraphics[width=0.47\textwidth]{56.png} &
+        \includegraphics[width=0.47\textwidth]{470.png} \\
+        (a) Frame 56. & (b) Frame 470. \\
+        \includegraphics[width=0.47\textwidth]{695.png} &
+        \includegraphics[width=0.47\textwidth]{912.png} \\
+        (c) Frame 695. & (d) Frame 912. \\
+    \end{tabular}
+    \caption{A simulation with an added graph of a projection field of one boid.}
+    \label{fig:simulation-multicolored}
+\end{figure}
 
 
 
@@ -350,24 +384,28 @@ In the final simulation (c) agents are moving around freely while maintaining a 
 
 \section*{Discussion}
 
-In this seminar we implemented and simulated a collective behaviour of birds using only their vision.
-We have improved on the original work by Bastien and Romanczuk \cite{main-paper} by replacing ray casting with direct projection.
-This improved the accuracy and calculation efficiency of the visual fields of the birds.
+
+In this seminar we successfully implemented and reproduced different collective behaviours of birds using only their vision as described in the original work by Bastien and Romanczuk \cite{main-paper}.
+The implementation was improved by replacing ray casting with direct projection.
+This increased the accuracy and calculation efficiency of the visual fields of the birds.
+
+We have also implemented the \textit{color} information of each projection interval as that allowed us to implement different kinds of boids (regular boids and disruptor/predator boids), as originally proposed in the paper but not implemented.
 
 The simulation is limited to only 2 dimensions as visualisation of more would be quite cumbersome. 
 
-% V delu smo predstavili postopek, ki na podlagi vhodnih parametrov generira teren v obliki otoka, na katerem v realnem času nato simulira hidravlično in termično erozijo ter za tem še rast koralnega grebena. Na teren dinamično nanaša teksture in izrisuje gladino morja. Zadani cilj, da ima generiran teren prepričljiv videz tropskega otoka z okoliškim koralnim grebenom, smo po našem mnenju dosegli. 
+The whole project is available on our GitHub repository \url{https://github.com/siggsy/collective-vision}.
 
-% Končni teren je uporaben predvsem v strateških igrah, kjer nanj večinoma gledamo iz oddaljenosti. Teren namreč nima dovolj podrobnosti za prvo osebne igre, kjer se igralec po terenu sprehaja  in ga raziskuje. Čas potreben za generiranje otoka želenega videza je pri uporabi v računalniški igri
-% %, katere namen ni dinamično spreminjanje terena, 
-% lahko težava, vendar bi jo z izboljšanjem implementacije lahko odpravili. Generiranje začetnega terena bi lahko pospešili tako, da bi ga namesto v jeziku C\# implementirali v nižjenivojskem jeziku (npr. C++) ali pa na senčilniku. Hitrost izvajanja simulacij naravnih procesov na GPE bi lahko optimizirali, saj se v trenutni implementaciji opravlja nepotrebno kopiranje tekstur, kar izvajanja simulacij upočasni. 
+% OLD
+% In this seminar we implemented and simulated a collective behaviour of birds using only their vision.
 
-% Terenu bi lahko dodatno izboljšali videz s tem, da bi za njegovo predstavitev uporabili več plasti z različnimi trdotami, kar bi morali nato upoštevati tudi pri simulacijah procesa erozije \cite{benevs_layered_08}. Funkcije, ki generirajo začetni teren, pa smo že zasnovali tako, da lahko izhod ene uporabimo kot vhod druge. S tem imamo več možnosti pri gradnji začetnega terena; nismo omejeni zgolj na obliko stožca. 
+% We have improved on the original work by Bastien and Romanczuk \cite{main-paper} by replacing ray casting with direct projection.
+% This improved the accuracy and calculation efficiency of the visual fields of the birds.
 
+% We have also implemented the \textit{color} information of each projection interval as that allowed us to implement different kinds of boids (regular boids and disruptor/predator boids), as originally proposed in the paper but not implemented.
 
+% The simulation is limited to only 2 dimensions as visualisation of more would be quite cumbersome. 
 
-
-
+% The whole project is available on our GitHub repository \url{https://github.com/siggsy/collective-vision}.
 
 
 
