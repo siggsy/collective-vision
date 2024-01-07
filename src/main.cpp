@@ -4,6 +4,7 @@
 #include <numbers>
 #include <ostream>
 #include <random>
+#include <chrono>
 
 #include "ANSI.h"
 #include "CLI.hpp"
@@ -14,6 +15,7 @@
 
 
 using namespace std;
+using namespace std::chrono;
 
 
 // ----------------------------------- [ Constants ] ---------------------------------------- //
@@ -107,7 +109,7 @@ void writeState(ostream& out, ostream& ovisual, const vector<unique_ptr<Boid>>& 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-void runSim(const int step_count, BoidParameters& boidParams, SimulationParameters& params, ostream& out, ostream& ovisual){
+void runSim(const int step_count, BoidParameters& boidParams, SimulationParameters& simParams, ostream& out, ostream& ovisual){
 	vector<unique_ptr<Boid>> boids;
 
 	if (boidParams.size() == 0){
@@ -131,14 +133,14 @@ void runSim(const int step_count, BoidParameters& boidParams, SimulationParamete
 
 	// Output simulation states
 	const int N = step_count;
-	if (params.empty()){
+	if (simParams.empty()){
 		for (int i = 0; i < N; i++) {
 			boids = simulationStep(defaultSimulationParameters, boids);
 			writeState(out, ovisual, boids);
 		}
 	} else {
 		for (int i = 0; i < N; i++) {
-			boids = simulationStep(params, boids);
+			boids = simulationStep(simParams, boids);
 			writeState(out, ovisual, boids);
 		}
 	}
@@ -148,6 +150,21 @@ void runSim(const int step_count, BoidParameters& boidParams, SimulationParamete
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
+// void writeProjectionField(ostream& out, const ProjectionField& field, bool colors = true){
+// 	if (colors){
+// 		for (const Interval& i : field){
+// 			out.write((const char*)(&i.start), sizeof(i.start));
+// 			out.write((const char*)(&i.end), sizeof(i.end));
+// 			real color = i.color;
+// 			out.write((const char*)(&color), sizeof(color));
+// 		}
+// 	} else {
+// 		for (const Interval& i : field){
+// 			out.write((const char*)(&i.start), sizeof(i.start));
+// 			out.write((const char*)(&i.end), sizeof(i.end));
+// 		}
+// 	}
+// }
 
 // void coloredProjectionTest(ostream& out){
 // 	ColoredProjectionField p = {};
@@ -174,6 +191,16 @@ void runSim(const int step_count, BoidParameters& boidParams, SimulationParamete
 	
 // 	printProjectionField(out, p);
 // }
+
+
+void runSpeedTest(const int step_count, BoidParameters& boidParams, SimulationParameters& simParams, ostream& out, ostream& ovisual){
+	const time_point t = system_clock::now();
+	{
+		runSim(CLI::stepCount, boidParams, simParams, out, ovisual);
+	}
+	const duration<float,milli> dt = (system_clock::now() - t);
+	printf("Time: %.3fms\n", dt.count());
+}
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
@@ -242,14 +269,13 @@ int main(int argc, char const* const* argv){
 	
 	unique_ptr<ostream> out = openOutput(CLI::output);
 	unique_ptr<ostream> out_visual = openOutput(CLI::output + ".p");
-	
+
 	SimulationParameters simParams = {};
+	BoidParameters boidParams = {};
+	
 	if (!parseSIMParams(CLI::colors, simParams)){
 		return 1;
-	}
-
-	BoidParameters boidParams = {};
-	if (!parseBOIDParams(CLI::boids, boidParams)){
+	} else if (!parseBOIDParams(CLI::boids, boidParams)){
 		return 1;
 	}
 	

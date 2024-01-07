@@ -1,5 +1,7 @@
 #include "Simulation.hpp"
 #include <cmath>
+#include <thread>
+#include <future>
 #include <stdexcept>
 
 #include "Boid.hpp"
@@ -7,6 +9,10 @@
 
 
 using namespace std;
+
+
+#define MAX_THREADS	8		// Max threads
+#define PREF_BLOCK	5		// Preffered elements per block
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
@@ -166,7 +172,7 @@ ProjectionField calculateProjectionField(const SimulationState& state, const Boi
 
 
 template<typename PARAMS>
-unique_ptr<Boid> simulateOne(const PARAMS& params, const vector<unique_ptr<Boid>>& prevState, int i){
+unique_ptr<Boid> simulateOne(const PARAMS& params, const SimulationState& prevState, int i){
 	unique_ptr<Boid> obj = make_unique<Boid>();
 	const Boid& prevObj = *prevState[i];
 	
@@ -179,20 +185,72 @@ unique_ptr<Boid> simulateOne(const PARAMS& params, const vector<unique_ptr<Boid>
 	return obj;
 }
 
+
+template<typename PARAMS>
+vector<unique_ptr<Boid>> simulateRange(const PARAMS& params, const SimulationState& prevState, int start, int end){
+	const int n = max(0, end - start);
+	
+	vector<unique_ptr<Boid>> v = {};
+	v.reserve(n);
+	
+	for (int i = start ; i < end ; i++){
+		v.emplace_back(simulateOne(params, prevState, i));
+	}
+	
+	return v;
+}
+
+
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-// TODO: threads
 template<typename PARAMS>
 static SimulationState _simulationStep(const PARAMS& params, const SimulationState& prevState){
-	SimulationState state = {};
+	if (prevState.size() <= 0){
+		return {};
+	}
 	
-	for (int i = 0 ; i < prevState.size() ; i++){
-		state.emplace_back(simulateOne(params, prevState, i));
+	const int n = prevState.size();
+	const int t = min((n + PREF_BLOCK - 1) / PREF_BLOCK, MAX_THREADS);
+	const int b = (n + t - 1) / t;
+	
+	future<vector<unique_ptr<Boid>>> f[t];
+	
+	for (int i = 0 ; i < t ; i++){
+		const int start = i * b;
+		const int end = min(start + b, n);
+		const launch policy = ((i == 0) ? launch::deferred : launch::async);
+		f[i] = async(policy, simulateRange<PARAMS>, ref(params), ref(prevState), start, end);
+	}
+	
+	
+	SimulationState state = {};
+	state.reserve(prevState.size());
+	
+	for (int i = 0 ; i < t ; i++){
+		vector<unique_ptr<Boid>> result = f[i].get();
+		state.insert(
+			state.end(),
+			make_move_iterator(result.begin()),
+			make_move_iterator(result.end())
+		);
 	}
 	
 	return state;
 }
+
+
+// template<typename PARAMS>
+// static SimulationState _simulationStep(const PARAMS& params, const SimulationState& prevState){
+// 	SimulationState state = {};
+// 	state.reserve(prevState.size());
+	
+// 	for (int i = 0 ; i < prevState.size() ; i++){
+// 		state.emplace_back(simulateOne(params, prevState, i));
+// 	}
+	
+// 	return state;
+// }
 
 
 SimulationState simulationStep(const SimParam& param, const SimulationState& objects){
