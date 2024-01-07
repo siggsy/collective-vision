@@ -67,23 +67,47 @@ void initRandom(vector<unique_ptr<Boid>>& boids, BoidParam& b, const Vec2& start
 	}
 }
 
-void writeState(ostream& out, const vector<unique_ptr<Boid>>& state){
+void writeProjectionField(ostream& out, const ProjectionField& field, bool colors = true){
+	if (colors){
+		const Interval& j = field.at(0);
+		out << j.start << "," << j.end << "," << j.color;
+		for (const Interval& i : field){
+			out << "," << i.start << "," << i.end << "," << i.color;
+			// out.write((const char*)(&i.start), sizeof(i.start));
+			// out.write((const char*)(&i.end), sizeof(i.end));
+			// real color = i.color;
+			// out.write((const char*)(&color), sizeof(color));
+		}
+	} else {
+		for (const Interval& i : field){
+			out << i.start << "," << i.end;
+			// out.write((const char*)(&i.start), sizeof(i.start));
+			// out.write((const char*)(&i.end), sizeof(i.end));
+		}
+	}
+}
+
+void writeState(ostream& out, ostream& ovisual, const vector<unique_ptr<Boid>>& state){
 	if (state.size() == 0) return;
 
 	const Boid& b = *state[0];
 	out << b.pos.x << " " << b.pos.y;
+	writeProjectionField(ovisual, b.view, true);
 	for (int i = 1; i < state.size(); i++){
 		const Boid& b = *state[i];
 		out << " " << b.pos.x << " " << b.pos.y;
+		ovisual << " ";
+		writeProjectionField(ovisual, b.view, true);
 	}
 	out << '\n';
+	ovisual << '\n';
 }
 
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
 
-void runSim(const int step_count, BoidParameters& boidParams, SimulationParameters& params, ostream& out){
+void runSim(const int step_count, BoidParameters& boidParams, SimulationParameters& params, ostream& out, ostream& ovisual){
 	vector<unique_ptr<Boid>> boids;
 
 	if (boidParams.size() == 0){
@@ -91,9 +115,14 @@ void runSim(const int step_count, BoidParameters& boidParams, SimulationParamete
 		return;
 	}
 
+
+	cout << boidParams.size();
 	for (int i = 0; i < boidParams.size(); i++){
 		BoidParam& b = boidParams[i];
-		initRandom(boids, b, {i*100.0, 0}, {i*100.0 + 5.0, 5});
+		if (i == boidParams.size() - 1)
+			initRandom(boids, b, {100.0, 0}, {105.0, 5.0});
+		else
+			initRandom(boids, b, {0, 0}, {5.0, 5});
 		out << b.count;
 		if (i < boidParams.size() - 1)
 			out << ' ';
@@ -104,13 +133,13 @@ void runSim(const int step_count, BoidParameters& boidParams, SimulationParamete
 	const int N = step_count;
 	if (params.empty()){
 		for (int i = 0; i < N; i++) {
-			writeState(out, boids);
 			boids = simulationStep(defaultSimulationParameters, boids);
+			writeState(out, ovisual, boids);
 		}
 	} else {
 		for (int i = 0; i < N; i++) {
-			writeState(out, boids);
 			boids = simulationStep(params, boids);
+			writeState(out, ovisual, boids);
 		}
 	}
 }
@@ -118,22 +147,6 @@ void runSim(const int step_count, BoidParameters& boidParams, SimulationParamete
 
 // ----------------------------------- [ Functions ] ---------------------------------------- //
 
-
-void writeProjectionField(ostream& out, const ProjectionField& field, bool colors = true){
-	if (colors){
-		for (const Interval& i : field){
-			out.write((const char*)(&i.start), sizeof(i.start));
-			out.write((const char*)(&i.end), sizeof(i.end));
-			real color = i.color;
-			out.write((const char*)(&color), sizeof(color));
-		}
-	} else {
-		for (const Interval& i : field){
-			out.write((const char*)(&i.start), sizeof(i.start));
-			out.write((const char*)(&i.end), sizeof(i.end));
-		}
-	}
-}
 
 
 // void coloredProjectionTest(ostream& out){
@@ -228,6 +241,7 @@ int main(int argc, char const* const* argv){
 	}
 	
 	unique_ptr<ostream> out = openOutput(CLI::output);
+	unique_ptr<ostream> out_visual = openOutput(CLI::output + ".p");
 	
 	SimulationParameters simParams = {};
 	if (!parseSIMParams(CLI::colors, simParams)){
@@ -240,7 +254,7 @@ int main(int argc, char const* const* argv){
 	}
 	
 	try {
-		runSim(CLI::stepCount, boidParams, simParams, *out);
+		runSim(CLI::stepCount, boidParams, simParams, *out, *out_visual);
 	} catch (const exception& e){
 		error("%s\n", e.what());
 		return 1;

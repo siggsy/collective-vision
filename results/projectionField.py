@@ -60,7 +60,7 @@ def drawP(P: list[tuple[float,float]]):
 	return x, y
 
 
-def drawColoredP(P: list[tuple[float,float,float]]):
+def drawColoredP(ax, P: list[tuple[float,float,float]]):
 	xy = {}
 	
 	for p in P:
@@ -89,8 +89,8 @@ def drawColoredP(P: list[tuple[float,float,float]]):
 		x,y = xy[color]
 		x.append(360)
 		y.append(0)
-		plt.fill(x, y, color=color, alpha=0.5)
-		plt.plot(x, y, color=color)
+		ax.fill(x, y, color=color, alpha=0.5)
+		ax.plot(x, y, color=color)
 
 
 print(P)
